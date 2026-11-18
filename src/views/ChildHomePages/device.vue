@@ -262,7 +262,8 @@ export default {
   },
   methods: {
     downloadMethod() {
-      var url = "https://zrlzw.esper.cloud";
+      var url =
+        process.env.VUE_APP_ESPER_CONSOLE_URL || "https://zrlzw.esper.cloud";
       window.open(url, "Open");
     },
     WarningEmit(Toggle) {
