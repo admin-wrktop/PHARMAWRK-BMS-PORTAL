@@ -90,6 +90,7 @@
 <script>
 import { signIn, confirmSignIn, signOut } from "aws-amplify/auth";
 import SnackBar from "@/components/SnackBar.vue";
+import { safeRedirect } from "@/router";
 
 /**
  * BMS sign-in: Cognito custom-auth email OTP (CUSTOM_WITHOUT_SRP).
@@ -174,7 +175,9 @@ export default {
         }
         localStorage.setItem("IsLoggedOut", "false");
         this.$store.commit("SET_USEREMAIL", this.Login.EmailID);
-        this.$router.push("/Dashboard");
+        this.$router.replace(
+          safeRedirect(this.$route.query.redirect) || "/Dashboard",
+        );
       } catch (error) {
         this.Login.Password = "";
         this.notify(error.message);
