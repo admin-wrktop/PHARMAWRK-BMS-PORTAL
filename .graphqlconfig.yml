@@ -1,0 +1,18 @@
+projects:
+  PharmaWRKBMS:
+    schemaPath: src/graphql/schema.json
+    includes:
+      - src/graphql/**/*.js
+    excludes:
+      - ./amplify/**
+    extensions:
+      amplify:
+        codeGenTarget: javascript
+        generatedFileName: ''
+        docsFilePath: src/graphql
+        region: ap-south-1
+        apiId: 36udfvagyzcuzfxl5276ocilf4
+        maxDepth: 7
+extensions:
+  amplify:
+    version: 3
