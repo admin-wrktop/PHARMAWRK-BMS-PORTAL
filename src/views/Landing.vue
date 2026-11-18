@@ -16,20 +16,6 @@
       <v-divider class="ml-4" vertical></v-divider>
       <h2 class="ml-2 text-white">BMS</h2>
       <v-spacer />
-      <v-tooltip color="primary" location="bottom">
-        <!--dialogCreateIssue = true  -->
-        <template v-slot:activator="{ props }">
-          <v-btn
-            v-bind="props"
-            icon
-            @click="htmlToImageMethod()"
-            color="primary"
-          >
-            <v-icon>mdi-information</v-icon>
-          </v-btn>
-        </template>
-        <span>Facing Issues Using PharmaWrk ? Click To Report</span>
-      </v-tooltip>
       <strong class="text-white">{{
         $store.getters.get_current_user_details.user_email_id
       }}</strong>
@@ -74,34 +60,22 @@
       <router-view />
     </v-main>
     <!-- </div> -->
-    <!-- <CreateIssueDialog
-      :StoreObj="StoreObj"
-      :dialogCreateIssue="dialogCreateIssue"
-      :selectedFilesFromDrop="selectedFilesFromDrop"
-      @clicked="dialogCreateIssueEmit"
-    /> -->
   </v-app>
 </template>
 <script>
-import * as htmlToImage from "html-to-image";
-import CreateIssueDialog from "@/components/CreateIssueDialog.vue";
 import Overlay from "@/components/Overlay.vue";
 import { GetCurrentUser } from "@/mixins/GetCurrentUser.js";
 export default {
   mixins: [GetCurrentUser],
   components: {
     Overlay,
-    CreateIssueDialog,
   },
   data: () => ({
-    dialogCreateIssue: false,
-    StoreObj: {},
     drawer: true,
     overlay: false,
     CardHeight: 0,
     selectedItem: 0,
     Email: "",
-    selectedFilesFromDrop: [],
     current_route_name: "",
     items: [
       {
@@ -215,27 +189,6 @@ export default {
     }
   },
   methods: {
-    htmlToImageMethod() {
-      this.selectedFilesFromDrop = [];
-      this.overlay = true;
-      var self = this;
-      htmlToImage.toBlob(this.$refs.home).then(function (blob) {
-        blob.name = `ScreenShot${new Date().getTime()}.png`;
-        console.log("Check The BLOB", blob);
-        self.overlay = false;
-        self.selectedFilesFromDrop.push(blob);
-        console.log("Check selectedFilesFromDrop", self.selectedFilesFromDrop);
-        self.dialogCreateIssue = true;
-      });
-    },
-    dialogCreateIssueEmit() {
-      this.dialogCreateIssue = false;
-      this.selectedFilesFromDrop = [];
-    },
-
-    reportissue() {
-      window.open("http://www.bugtrakr.com/BugReportForm/PHRMAWRK");
-    },
   },
 };
 </script>
