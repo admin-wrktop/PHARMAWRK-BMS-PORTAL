@@ -99,14 +99,6 @@ const routes = [
             /* webpackChunkName: "Specialization" */ "../views/ChildHomePages/BugReportView.vue"
           ),
       },
-      // {
-      //   name: "DrugType",
-      //   path: "/DrugType",
-      //   component: () =>
-      //     import(
-      //       /* webpackChunkName: "Specialization" */ "../views/ChildHomePages/DrugType.vue"
-      //     ),
-      // },
     ],
   },
   { path: "/:pathMatch(.*)*", redirect: { name: "Dashboard" } },
