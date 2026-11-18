@@ -1,82 +1,65 @@
 <template>
-  <div class="pw-auth">
-    <!-- Brand panel -->
-    <aside class="pw-auth__brand" aria-label="About PharmaWRK BMS">
-      <div class="pw-auth__brand-inner">
-        <img :src="logoDark" alt="PharmaWRK" class="pw-auth__logo" />
+  <div class="bms-auth">
+    <div class="bms-auth__glow" aria-hidden="true"></div>
 
-        <div class="pw-auth__pitch">
-          <span class="pw-auth__eyebrow">PharmaWRK BMS</span>
-          <h1 class="pw-auth__headline">
-            Back office for <span>every customer.</span>
-          </h1>
-          <p class="pw-auth__lead">
-            Onboard organizations, manage devices and API keys, and keep an
-            eye on platform activity — for the PharmaWRK operations team.
-          </p>
+    <header class="bms-auth__top">
+      <span v-if="env" class="bms-auth__env">{{ env }}</span>
+    </header>
 
-          <ul class="pw-auth__points">
-            <li v-for="p in points" :key="p.title">
-              <span class="pw-auth__point-icon" aria-hidden="true">
-                <v-icon size="18">{{ p.icon }}</v-icon>
-              </span>
-              <div>
-                <div class="pw-auth__point-title">{{ p.title }}</div>
-                <div class="pw-auth__point-text">{{ p.text }}</div>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <div class="pw-auth__apps">
-          <span><v-icon size="14" class="mr-1">mdi-shield-lock-outline</v-icon
-            >Internal tool · authorised staff only</span>
-        </div>
+    <main class="bms-auth__main">
+      <div class="bms-auth__brand">
+        <img :src="logo" alt="PharmaWRK" class="bms-auth__logo" />
+        <span class="bms-auth__divider" aria-hidden="true"></span>
+        <span class="bms-auth__product">Back Office</span>
       </div>
-    </aside>
 
-    <!-- Sign-in -->
-    <main class="pw-auth__main">
-      <div class="pw-auth__mobile-logo">
-        <img :src="logoLight" alt="PharmaWRK" />
-      </div>
-      <div class="pw-auth__card">
+      <div class="bms-auth__card">
+        <div class="bms-auth__badge" aria-hidden="true">
+          <v-icon size="22">mdi-shield-account-outline</v-icon>
+        </div>
         <SignInCard />
       </div>
-      <footer class="pw-auth__footer">
-        <span>© {{ year }} WRKTOP Technologies</span>
-        <span class="pw-auth__dot" aria-hidden="true">·</span>
-        <a href="mailto:contactus@wrktop.com">Support</a>
-      </footer>
+
+      <ul class="bms-auth__modules" aria-label="What BMS manages">
+        <li v-for="m in modules" :key="m.text">
+          <v-icon size="16">{{ m.icon }}</v-icon>
+          <span>{{ m.text }}</span>
+        </li>
+      </ul>
     </main>
+
+    <footer class="bms-auth__footer">
+      <span>© {{ year }} WRKTOP Technologies</span>
+      <span aria-hidden="true">·</span>
+      <span>Authorised staff only</span>
+      <span aria-hidden="true">·</span>
+      <a href="mailto:contactus@wrktop.com">Support</a>
+    </footer>
   </div>
 </template>
 
 <script>
 import SignInCard from "@/components/Auth/SignInCard.vue";
 
+/** Small environment tag from the hostname (dev.bms… → DEV). Hidden on prod. */
+function detectEnv() {
+  const host = (typeof window !== "undefined" && window.location.hostname) || "";
+  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(host)) return "LOCAL";
+  if (/^dev\./.test(host)) return "DEV";
+  return "";
+}
+
 export default {
   components: { SignInCard },
   data: () => ({
     year: new Date().getFullYear(),
-    logoDark: require("@/assets/logo4.png"),
-    logoLight: require("@/assets/img/logo.png"),
-    points: [
-      {
-        icon: "mdi-domain",
-        title: "Organizations",
-        text: "Create customers, switch modules on and manage their users.",
-      },
-      {
-        icon: "mdi-cellphone-cog",
-        title: "Devices & access",
-        text: "Devices, mobile API keys and sign-in OTPs.",
-      },
-      {
-        icon: "mdi-chart-box-outline",
-        title: "Platform activity",
-        text: "Usage dashboard, visit logs, audit trail and bug reports.",
-      },
+    logo: require("@/assets/logo4.png"),
+    env: detectEnv(),
+    modules: [
+      { icon: "mdi-domain", text: "Organizations" },
+      { icon: "mdi-cellphone-cog", text: "Devices" },
+      { icon: "mdi-key-outline", text: "API keys" },
+      { icon: "mdi-text-box-search-outline", text: "Audit logs" },
     ],
   }),
   mounted() {
@@ -86,194 +69,168 @@ export default {
 </script>
 
 <style scoped>
-.pw-auth {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: minmax(420px, 46%) 1fr;
-  background: rgb(var(--v-theme-background));
-}
-
-/* Brand panel */
-.pw-auth__brand {
+.bms-auth {
   position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  background: linear-gradient(165deg, #12353a 0%, #0f2a2e 45%, #0b2023 100%);
   color: #e2ece9;
-  background: radial-gradient(
-      700px 420px at 100% 0%,
-      rgba(16, 185, 129, 0.28),
-      transparent 60%
-    ),
-    radial-gradient(600px 400px at 0% 100%, rgba(14, 165, 233, 0.14), transparent 60%),
-    linear-gradient(160deg, #0f2a2e 0%, #0b2023 100%);
 }
-.pw-auth__brand::after {
-  content: "";
+/* soft emerald light behind the card */
+.bms-auth__glow {
   position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 22px 22px;
-  mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
+  left: 50%;
+  top: 46%;
+  width: 900px;
+  height: 640px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    closest-side,
+    rgba(16, 185, 129, 0.22),
+    rgba(16, 185, 129, 0.06) 55%,
+    transparent 100%
+  );
   pointer-events: none;
 }
-.pw-auth__brand-inner {
+.bms-auth__top,
+.bms-auth__main,
+.bms-auth__footer {
   position: relative;
   z-index: 1;
-  height: 100%;
+}
+.bms-auth__top {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 40px;
-  padding: 40px 56px;
-  max-width: 620px;
+  justify-content: flex-end;
+  min-height: 56px;
+  padding: 18px 24px 0;
 }
-.pw-auth__logo-link {
-  display: inline-flex;
-  border-radius: 8px;
-}
-.pw-auth__logo {
-  height: 40px;
-  width: auto;
+.bms-auth__env {
   align-self: flex-start;
-}
-.pw-auth__eyebrow {
-  display: inline-block;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   color: #6ee7b7;
-  margin-bottom: 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
 }
-.pw-auth__headline {
-  font-size: clamp(30px, 3.2vw, 42px);
-  line-height: 1.12;
-  font-weight: 750;
-  letter-spacing: -0.03em;
-  color: #f8fafc;
-  margin: 0 0 14px;
-}
-.pw-auth__headline span {
-  color: #6ee7b7;
-}
-.pw-auth__lead {
-  font-size: 16px;
-  line-height: 1.6;
-  color: rgba(226, 236, 233, 0.75);
-  margin: 0 0 32px;
-  max-width: 460px;
-}
-.pw-auth__points {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 18px;
-}
-.pw-auth__points li {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-}
-.pw-auth__point-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  color: #6ee7b7;
-  background: rgba(110, 231, 183, 0.1);
-  border: 1px solid rgba(110, 231, 183, 0.18);
-}
-.pw-auth__point-title {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #f8fafc;
-}
-.pw-auth__point-text {
-  font-size: 13.5px;
-  color: rgba(226, 236, 233, 0.65);
-  margin-top: 2px;
-}
-.pw-auth__apps {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  font-size: 12.5px;
-  color: rgba(226, 236, 233, 0.6);
-}
-.pw-auth__badges {
-  display: flex;
-  gap: 10px;
-}
-.pw-auth__badges a {
-  display: inline-flex;
-  border-radius: 8px;
-  opacity: 0.9;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.pw-auth__badges a:hover {
-  opacity: 1;
-  transform: translateY(-1px);
-}
-.pw-auth__badges img {
-  height: 38px;
-  width: auto;
-}
-
-/* Sign-in side */
-.pw-auth__main {
+.bms-auth__main {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 24px 24px;
+  padding: 8px 16px 32px;
+}
+.bms-auth__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.bms-auth__logo {
+  height: 40px;
+  width: auto;
+}
+.bms-auth__divider {
+  width: 1px;
+  height: 26px;
+  background: rgba(226, 236, 233, 0.25);
+}
+.bms-auth__product {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f8fafc;
+}
+.bms-auth__card {
   position: relative;
-}
-.pw-auth__mobile-logo {
-  display: none;
-  margin-bottom: 24px;
-}
-.pw-auth__mobile-logo img {
-  height: 36px;
-}
-.pw-auth__card {
   width: 100%;
   max-width: 420px;
 }
-.pw-auth__footer {
+.bms-auth__badge {
   position: absolute;
-  bottom: 20px;
-  left: 0;
-  right: 0;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  box-shadow: 0 8px 20px -6px rgba(4, 120, 87, 0.6),
+    0 0 0 4px rgba(255, 255, 255, 1);
+}
+.bms-auth__card :deep(.pw-signin) {
+  padding: 40px 36px 30px;
+  border: 0;
+  border-radius: 18px;
+  color: rgb(var(--v-theme-on-surface));
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.45),
+    0 10px 24px -12px rgba(0, 0, 0, 0.3);
+  text-align: left;
+}
+.bms-auth__card :deep(.pw-signin__title) {
+  text-align: center;
+  margin-top: 4px;
+}
+.bms-auth__card :deep(.pw-signin__sub) {
+  text-align: center;
+  margin-bottom: 26px;
+}
+.bms-auth__modules {
+  list-style: none;
+  padding: 0;
+  margin: 28px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.bms-auth__modules li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(226, 236, 233, 0.82);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+.bms-auth__modules .v-icon {
+  color: #6ee7b7;
+}
+.bms-auth__footer {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 8px;
+  padding: 0 16px 22px;
   font-size: 12.5px;
-  color: var(--pw-muted);
+  color: rgba(226, 236, 233, 0.5);
 }
-.pw-auth__footer a {
-  color: var(--pw-muted);
+.bms-auth__footer a {
+  color: rgba(226, 236, 233, 0.7);
   text-decoration: none;
 }
-.pw-auth__footer a:hover {
-  color: rgb(var(--v-theme-primary));
+.bms-auth__footer a:hover {
+  color: #6ee7b7;
   text-decoration: underline;
 }
-
-@media (max-width: 960px) {
-  .pw-auth {
-    grid-template-columns: 1fr;
+@media (max-width: 480px) {
+  .bms-auth__card :deep(.pw-signin) {
+    padding: 36px 22px 24px;
   }
-  .pw-auth__brand {
-    display: none;
-  }
-  .pw-auth__mobile-logo {
-    display: block;
-  }
-  .pw-auth__footer {
-    position: static;
-    margin-top: 32px;
+  .bms-auth__logo {
+    height: 32px;
   }
 }
 </style>
