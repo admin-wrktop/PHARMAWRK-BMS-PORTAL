@@ -1,0 +1,81 @@
+name: Deploy BMS
+
+# DEV only for now: every push to main deploys to https://dev.bms.pharmawrk.com.
+# Build-time settings come from the GitHub environment "dev" (Settings →
+# Environments → dev → Variables):
+#   VUE_APP_AWS_COGNITO_USER_POOL_ID, VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID,
+#   VUE_APP_AWS_PROJECT_REGION, VUE_APP_AWS_GRAPHQL_ENDPOINT,
+#   VUE_APP_ESPER_CONSOLE_URL (optional)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-bms-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy-dev:
+    name: Deploy to DEV
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      AWS_REGION: ap-south-1
+      DEPLOY_ROLE_ARN: arn:aws:iam::875476618141:role/pharmawrk/PharmaWRK-Deploy-bms-dev
+      S3_BUCKET: pharmawrk-web-bms-dev-875476618141
+      CLOUDFRONT_DISTRIBUTION_ID: E2NNIJLHEE8CWX
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          VUE_APP_AWS_COGNITO_USER_POOL_ID: ${{ vars.VUE_APP_AWS_COGNITO_USER_POOL_ID }}
+          VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID: ${{ vars.VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID }}
+          VUE_APP_AWS_PROJECT_REGION: ${{ vars.VUE_APP_AWS_PROJECT_REGION }}
+          VUE_APP_AWS_GRAPHQL_ENDPOINT: ${{ vars.VUE_APP_AWS_GRAPHQL_ENDPOINT }}
+          VUE_APP_ESPER_CONSOLE_URL: ${{ vars.VUE_APP_ESPER_CONSOLE_URL }}
+        run: |
+          for v in VUE_APP_AWS_COGNITO_USER_POOL_ID VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID VUE_APP_AWS_PROJECT_REGION; do
+            if [ -z "${!v}" ]; then
+              echo "::error::GitHub environment variable $v is not set for environment 'dev'"
+              exit 1
+            fi
+          done
+          npm run build
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload to S3
+        run: |
+          # Hashed assets: cache for a year. index.html and the rest: always revalidate.
+          aws s3 sync dist/ "s3://$S3_BUCKET/" --delete \
+            --exclude index.html --exclude favicon.png \
+            --cache-control "public,max-age=31536000,immutable"
+          aws s3 cp dist/index.html "s3://$S3_BUCKET/index.html" \
+            --cache-control "no-cache" --content-type "text/html; charset=utf-8"
+          aws s3 cp dist/favicon.png "s3://$S3_BUCKET/favicon.png" \
+            --cache-control "public,max-age=3600"
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*"
