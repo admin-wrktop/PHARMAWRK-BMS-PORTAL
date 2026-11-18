@@ -3,10 +3,6 @@
     <v-card v-if="current_view == 'LIST'" class="elevation-0">
       <SnackBar :SnackBarComponent="SnackbarComponent" />
       <Overlay :overlay="overlay" />
-      <OrganisationOTP
-        :OrganisationOTP="OrganisationOTP"
-        @clicked="OrganisationOTPEmit"
-      />
 
       <CreateEditOrganization
         :StoreObj="StoreObj"
@@ -199,15 +195,6 @@
                     <v-icon size="small" color="red">mdi-close</v-icon>
                     <span class="ml-2">Deactivate</span>
                   </v-list-item>
-                  <!-- <v-list-item
-                      v-if="item.organization_status == 'ACTIVE'"
-                      @click.stop="CheckEachItem(item, 'SETOTP')"
-                    >
-                      <v-list-item-icon>
-                        <v-icon size="small" color="green">mdi-lock</v-icon>
-                      </v-list-item-icon>
-                        <v-list-item-title>Set OTP</v-list-item-title>
-                    </v-list-item> -->
                 </v-list>
               </v-menu>
             </template>
@@ -243,7 +230,6 @@ import Overlay from "@/components/Overlay.vue";
 
 import { ListOrganizations } from "@/graphql/queries.js";
 import AuditTrailOrg from "@/components/Cards/AuditTrailOrg.vue";
-import OrganisationOTP from "@/components/Dialogs/OrganisationOTP.vue";
 
 import { generateClient } from "aws-amplify/api";
 const client = generateClient();
@@ -255,13 +241,11 @@ export default {
     WarningDialog,
     CreateEditOrganization,
     AuditTrailOrg,
-    OrganisationOTP,
   },
   props: {
     GetCurrentUserDetailsObj: Object,
   },
   data: () => ({
-    OrganisationOTP: false,
     // singleSelect: false,
     selected: [],
     current_view: "LIST",
@@ -338,9 +322,6 @@ export default {
       if (Action == "ACTIVATE" || Action == "DEACTIVATE") {
         this.DialogWarning = true;
       }
-      if (Action == "SETOTP") {
-        this.OrganisationOTP = true;
-      }
     },
     handleRowClick(item) {
       this.StoreObj = item;
@@ -377,9 +358,6 @@ export default {
         this.overlay = false;
         this.NoData = error.errors[0].message;
       }
-    },
-    OrganisationOTPEmit() {
-      this.OrganisationOTP = false;
     },
   },
 };

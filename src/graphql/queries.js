@@ -177,11 +177,6 @@ export const ListTutorialFiles = /* GraphQL */ `
     ListTutorialFiles
   }
 `;
-export const ListMobileApiKeys = /* GraphQL */ `
-  query ListMobileApiKeys {
-    ListMobileApiKeys
-  }
-`;
 export const ListVisitLogByTime = /* GraphQL */ `
   query ListVisitLogByTime($input: ListVisitLogByTimeInput) {
     ListVisitLogByTime(input: $input)
@@ -257,11 +252,6 @@ export const GetOrganizationsMonthlyReports = /* GraphQL */ `
     $input: GetOrganizationsMonthlyReportsInput
   ) {
     GetOrganizationsMonthlyReports(input: $input)
-  }
-`;
-export const ListEnterdDefaultOtpUsers = /* GraphQL */ `
-  query ListEnterdDefaultOtpUsers {
-    ListEnterdDefaultOtpUsers
   }
 `;
 export const ListBugReports = /* GraphQL */ `

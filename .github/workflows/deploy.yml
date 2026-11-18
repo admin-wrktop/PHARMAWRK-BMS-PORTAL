@@ -45,10 +45,10 @@ jobs:
           VUE_APP_AWS_COGNITO_USER_POOL_ID: ${{ vars.VUE_APP_AWS_COGNITO_USER_POOL_ID || 'ap-south-1_lc4CPMAp0' }}
           VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID: ${{ vars.VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID || '7s4shkr6lsjs90fnba8mree4i4' }}
           VUE_APP_AWS_PROJECT_REGION: ${{ vars.VUE_APP_AWS_PROJECT_REGION || 'ap-south-1' }}
-          VUE_APP_AWS_GRAPHQL_ENDPOINT: ${{ vars.VUE_APP_AWS_GRAPHQL_ENDPOINT }}
+          VUE_APP_AWS_GRAPHQL_ENDPOINT: ${{ vars.VUE_APP_AWS_GRAPHQL_ENDPOINT || 'https://tu3vgr25zrf6bagaax6t35a56a.appsync-api.ap-south-1.amazonaws.com/graphql' }}
           VUE_APP_ESPER_CONSOLE_URL: ${{ vars.VUE_APP_ESPER_CONSOLE_URL }}
         run: |
-          for v in VUE_APP_AWS_COGNITO_USER_POOL_ID VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID VUE_APP_AWS_PROJECT_REGION; do
+          for v in VUE_APP_AWS_COGNITO_USER_POOL_ID VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID VUE_APP_AWS_PROJECT_REGION VUE_APP_AWS_GRAPHQL_ENDPOINT; do
             if [ -z "${!v}" ]; then
               echo "::error::GitHub environment variable $v is not set for environment 'dev'"
               exit 1

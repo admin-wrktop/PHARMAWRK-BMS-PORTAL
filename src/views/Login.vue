@@ -58,7 +58,7 @@ export default {
     modules: [
       { icon: "mdi-domain", text: "Organizations" },
       { icon: "mdi-cellphone-cog", text: "Devices" },
-      { icon: "mdi-key-outline", text: "API keys" },
+      { icon: "mdi-bell-outline", text: "Notifications" },
       { icon: "mdi-text-box-search-outline", text: "Audit logs" },
     ],
   }),

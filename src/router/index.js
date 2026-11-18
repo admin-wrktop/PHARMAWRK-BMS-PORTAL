@@ -47,14 +47,6 @@ const routes = [
             /* webpackChunkName: "MasterPOVList" */ "../views/ChildHomePages/Notifications.vue"
           ),
       },
-      {
-        name: "Api Key",
-        path: "/apikey",
-        component: () =>
-          import(
-            /* webpackChunkName: "MasterPOVList" */ "../views/ChildHomePages/apikey.vue"
-          ),
-      },
 
       {
         name: "Visit Log",
@@ -71,14 +63,6 @@ const routes = [
         component: () =>
           import(
             /* webpackChunkName: "MasterPOVList" */ "../views/ChildHomePages/Auditlog.vue"
-          ),
-      },
-      {
-        name: "Set Users OTP",
-        path: "/manualOTP",
-        component: () =>
-          import(
-            /* webpackChunkName: "MasterPOVList" */ "../views/ChildHomePages/SetManualOTP.vue"
           ),
       },
 

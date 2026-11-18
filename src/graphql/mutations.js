@@ -43,13 +43,6 @@ export const UpdateSpecialization = /* GraphQL */ `
     UpdateSpecialization(input: $input)
   }
 `;
-export const DeactiveOrActivateSpecialization = /* GraphQL */ `
-  mutation DeactiveOrActivateSpecialization(
-    $input: DeactiveOrActivateSpecializationInput
-  ) {
-    DeactiveOrActivateSpecialization(input: $input)
-  }
-`;
 export const CreatePOV = /* GraphQL */ `
   mutation CreatePOV($input: CreatePOVInput) {
     CreatePOV(input: $input)
@@ -58,11 +51,6 @@ export const CreatePOV = /* GraphQL */ `
 export const UpdatePOV = /* GraphQL */ `
   mutation UpdatePOV($input: UpdatePOVInput) {
     UpdatePOV(input: $input)
-  }
-`;
-export const ActivateOrDeactivatePOV = /* GraphQL */ `
-  mutation ActivateOrDeactivatePOV($input: ActivateOrDeactivatePOVInput) {
-    ActivateOrDeactivatePOV(input: $input)
   }
 `;
 export const CreateDevice = /* GraphQL */ `
@@ -92,11 +80,6 @@ export const DeleteTutorialFile = /* GraphQL */ `
     DeleteTutorialFile(input: $input)
   }
 `;
-export const UpdateExpiryApiKey = /* GraphQL */ `
-  mutation UpdateExpiryApiKey {
-    UpdateExpiryApiKey
-  }
-`;
 export const CreateNotificationsSettings = /* GraphQL */ `
   mutation CreateNotificationsSettings(
     $input: CreateNotificationsSettingsInput
@@ -112,23 +95,6 @@ export const UpdateNotificationSettings = /* GraphQL */ `
 export const SendNotificationsToUsers = /* GraphQL */ `
   mutation SendNotificationsToUsers($input: SendNotificationsToUsersInput) {
     SendNotificationsToUsers(input: $input)
-  }
-`;
-export const UpdateOtpForUsers = /* GraphQL */ `
-  mutation UpdateOtpForUsers($input: UpdateOtpForUsersInput) {
-    UpdateOtpForUsers(input: $input)
-  }
-`;
-export const SetDefaultOtpForUser = /* GraphQL */ `
-  mutation SetDefaultOtpForUser($input: SetDefaultOtpForUserInput) {
-    SetDefaultOtpForUser(input: $input)
-  }
-`;
-export const RemoveDefaultEnteredOtpUser = /* GraphQL */ `
-  mutation RemoveDefaultEnteredOtpUser(
-    $input: RemoveDefaultEnteredOtpUserInput
-  ) {
-    RemoveDefaultEnteredOtpUser(input: $input)
   }
 `;
 export const UpdateBugReport = /* GraphQL */ `

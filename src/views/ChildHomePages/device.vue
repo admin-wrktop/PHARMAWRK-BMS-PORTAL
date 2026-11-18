@@ -304,15 +304,20 @@ export default {
             input: {},
           },
         });
-        var StoreArray = JSON.parse(result.data.ListDevices);
-        this.DeviceList = StoreArray.data.Items;
-        console.log("ListDevices", this.DeviceList);
+        const res = JSON.parse(result.data.ListDevices);
+        // { status, data: { Items, Count } }; no devices → status "ERROR"
+        this.DeviceList = (res && res.data && res.data.Items) || [];
+        if (!this.DeviceList.length && res && res.message) {
+          this.NoData = res.message;
+        }
         this.filterarray = this.DeviceList;
 
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData =
+          (error && error.errors && error.errors[0] && error.errors[0].message) ||
+          "Could not load devices";
       }
     },
   },

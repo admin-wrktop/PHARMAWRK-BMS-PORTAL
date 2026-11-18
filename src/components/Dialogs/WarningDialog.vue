@@ -42,12 +42,6 @@
             <span v-if="$route.name == 'Organization'">{{
               " " + StoreObj.organization_name
             }}</span>
-            <span v-if="$route.name == 'Specialization'">{{
-              " " + StoreObj.specialization_name
-            }}</span>
-            <span v-if="$route.name == 'MasterPOVList'">{{
-              " " + StoreObj.pov_name
-            }}</span>
             ?
           </div>
         </v-card-text>
@@ -70,26 +64,6 @@
             @click="ActivateInActiveOrglist((Toggle = 1))"
             >Confirm</v-btn
           >
-          <v-btn
-            size="small"
-            tile
-            v-if="$route.name == 'Specialization'"
-            :loading="loading"
-            color="primary"
-            variant="elevated"
-            @click="ActivateInActiveSpeclist((Toggle = 1))"
-            >Confirm</v-btn
-          >
-          <v-btn
-            size="small"
-            tile
-            v-if="$route.name == 'MasterPOVList'"
-            :loading="loading"
-            color="primary"
-            variant="elevated"
-            @click="ActivateInActivePovlist((Toggle = 1))"
-            >Confirm</v-btn
-          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -99,8 +73,6 @@
 import SnackBar from "@/components/SnackBar.vue";
 import {
   DeactiveOrActivateOrganization,
-  DeactiveOrActivateSpecialization,
-  ActivateOrDeactivatePOV,
 } from "@/graphql/mutations.js";
 import { generateClient } from "aws-amplify/api";
 const client = generateClient();
@@ -126,83 +98,6 @@ export default {
     },
   },
   methods: {
-    async ActivateInActivePovlist() {
-      try {
-        this.loading = true;
-        var inputparams = {
-          pov_id: this.StoreObj.pov_id,
-          action: this.StoreObj.Action,
-        };
-        let result = await client.graphql({
-          query: ActivateOrDeactivatePOV,
-          variables: {
-            input: inputparams,
-          },
-        });
-        this.loading = false;
-        var ResultObject = JSON.parse(result.data.ActivateOrDeactivatePOV);
-
-        if (ResultObject.status == "Success") {
-          this.SnackBarComponent = {
-            SnackbarVmodel: true,
-            SnackbarColor: "primary",
-            SnackbarText: ResultObject.Status_Message,
-            Top: true,
-            timeout: 2000,
-          };
-          this.WarningEmit((this.Toggle = 2));
-        }
-      } catch (error) {
-        console.warn(error);
-        this.loading = false;
-        this.SnackBarComponent = {
-          SnackbarVmodel: true,
-          SnackbarColor: "red",
-          SnackbarText: error.errors[0].message,
-          Top: true,
-          timeout: 2000,
-        };
-      }
-    },
-    async ActivateInActiveSpeclist() {
-      try {
-        this.loading = true;
-        var inputparams = {
-          specialization_id: this.StoreObj.specialization_id,
-          action: this.StoreObj.Action,
-        };
-        let result = await client.graphql({
-          query: DeactiveOrActivateSpecialization,
-          variables: {
-            input: inputparams,
-          },
-        });
-        this.loading = false;
-        var ResultObject = JSON.parse(
-          result.data.DeactiveOrActivateSpecialization
-        );
-        if (ResultObject.status == "Success") {
-          this.SnackBarComponent = {
-            SnackbarVmodel: true,
-            SnackbarColor: "primary",
-            SnackbarText: ResultObject.Status_Message,
-            Top: true,
-            timeout: 2000,
-          };
-          this.WarningEmit((this.Toggle = 2));
-        }
-      } catch (error) {
-        console.warn(error);
-        this.loading = false;
-        this.SnackBarComponent = {
-          SnackbarVmodel: true,
-          SnackbarColor: "red",
-          SnackbarText: error.errors[0].message,
-          Top: true,
-          timeout: 2000,
-        };
-      }
-    },
     async ActivateInActiveOrglist() {
       try {
         this.loading = true;

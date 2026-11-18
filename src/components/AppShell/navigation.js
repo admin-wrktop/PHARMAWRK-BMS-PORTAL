@@ -12,8 +12,6 @@ export const NAV_ITEMS = [
   H("Customers"),
   I("Organizations", "mdi-domain", "Organization"),
   I("Device Management", "mdi-cellphone-cog", "Device"),
-  I("API Keys", "mdi-key-outline", "Api Key"),
-  I("User OTPs", "mdi-lock-reset", "Set Users OTP"),
   I("Data Templates", "mdi-database-import-outline", "Upload Templates"),
   I("Notifications", "mdi-bell-outline", "Notification"),
 
@@ -28,8 +26,6 @@ export const PAGE_DESCRIPTIONS = {
   Organization:
     "Create and manage customer organizations, their modules and users.",
   Device: "Devices registered to customer organizations.",
-  "Api Key": "Mobile API keys issued to each organization and their expiry.",
-  "Set Users OTP": "Set or remove fixed sign-in OTPs for users.",
   "Upload Templates": "Excel templates for bulk data uploads.",
   "Visit Log": "Field visits logged by reps, by organization and date.",
   "Audit Log": "Who changed what, and when.",

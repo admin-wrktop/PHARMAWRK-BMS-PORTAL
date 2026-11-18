@@ -211,11 +211,6 @@
 .gradient-back {
   background: rgb(var(--v-theme-surface-light)) !important;
 }
-.OTPUsersSet {
-  font-size: 14px !important;
-  color: var(--pw-muted) !important;
-  font-weight: 600;
-}
 .cardBorder {
   border-radius: var(--pw-radius) !important;
 }
