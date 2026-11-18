@@ -1,80 +1,52 @@
 name: Deploy BMS
 
-# DEV only for now: every push to main deploys to https://dev.bms.pharmawrk.com.
+# DEV:  every push to main deploys to https://dev.bms.pharmawrk.com.
+# PROD: manual only. Actions -> Deploy BMS -> Run workflow -> environment "prod"
+#       (from main) deploys to https://prod.bms.pharmawrk.com.
 #
-# Build settings: the DEV values below are public identifiers (they ship in
-# the browser bundle anyway), not secrets. A variable of the same name in the
-# GitHub environment "dev" overrides the default here.
+# The values below are public identifiers that ship in the browser bundle,
+# not secrets. A GitHub environment variable of the same name overrides them.
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy
+        type: choice
+        options: [dev, prod]
+        default: dev
 
 permissions:
   id-token: write
   contents: read
 
-concurrency:
-  group: deploy-bms-dev
-  cancel-in-progress: false
-
 jobs:
   deploy-dev:
-    name: Deploy to DEV
-    runs-on: ubuntu-latest
-    environment: dev
-    env:
-      AWS_REGION: ap-south-1
-      DEPLOY_ROLE_ARN: arn:aws:iam::875476618141:role/pharmawrk/PharmaWRK-Deploy-bms-dev
-      S3_BUCKET: pharmawrk-web-bms-dev-875476618141
-      CLOUDFRONT_DISTRIBUTION_ID: E2NNIJLHEE8CWX
-    steps:
-      - uses: actions/checkout@v4
+    name: DEV
+    if: github.event_name == 'push' || inputs.environment == 'dev'
+    uses: ./.github/workflows/_deploy-env.yml
+    with:
+      environment: dev
+      aws_region: ap-south-1
+      deploy_role_arn: arn:aws:iam::875476618141:role/pharmawrk/PharmaWRK-Deploy-bms-dev
+      s3_bucket: pharmawrk-web-bms-dev-875476618141
+      cloudfront_distribution_id: E2NNIJLHEE8CWX
+      user_pool_id: ap-south-1_lc4CPMAp0
+      web_client_id: 7s4shkr6lsjs90fnba8mree4i4
+      graphql_endpoint: https://tu3vgr25zrf6bagaax6t35a56a.appsync-api.ap-south-1.amazonaws.com/graphql
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        env:
-          VUE_APP_AWS_COGNITO_USER_POOL_ID: ${{ vars.VUE_APP_AWS_COGNITO_USER_POOL_ID || 'ap-south-1_lc4CPMAp0' }}
-          VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID: ${{ vars.VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID || '7s4shkr6lsjs90fnba8mree4i4' }}
-          VUE_APP_AWS_PROJECT_REGION: ${{ vars.VUE_APP_AWS_PROJECT_REGION || 'ap-south-1' }}
-          VUE_APP_AWS_GRAPHQL_ENDPOINT: ${{ vars.VUE_APP_AWS_GRAPHQL_ENDPOINT || 'https://tu3vgr25zrf6bagaax6t35a56a.appsync-api.ap-south-1.amazonaws.com/graphql' }}
-          VUE_APP_ESPER_CONSOLE_URL: ${{ vars.VUE_APP_ESPER_CONSOLE_URL }}
-        run: |
-          for v in VUE_APP_AWS_COGNITO_USER_POOL_ID VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID VUE_APP_AWS_PROJECT_REGION VUE_APP_AWS_GRAPHQL_ENDPOINT; do
-            if [ -z "${!v}" ]; then
-              echo "::error::GitHub environment variable $v is not set for environment 'dev'"
-              exit 1
-            fi
-          done
-          npm run build
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Upload to S3
-        run: |
-          # Hashed assets: cache for a year. index.html and the rest: always revalidate.
-          aws s3 sync dist/ "s3://$S3_BUCKET/" --delete \
-            --exclude index.html --exclude favicon.png \
-            --cache-control "public,max-age=31536000,immutable"
-          aws s3 cp dist/index.html "s3://$S3_BUCKET/index.html" \
-            --cache-control "no-cache" --content-type "text/html; charset=utf-8"
-          aws s3 cp dist/favicon.png "s3://$S3_BUCKET/favicon.png" \
-            --cache-control "public,max-age=3600"
-
-      - name: Invalidate CloudFront
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
-            --paths "/*"
+  deploy-prod:
+    name: PROD
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/_deploy-env.yml
+    with:
+      environment: prod
+      aws_region: ap-south-1
+      deploy_role_arn: arn:aws:iam::069371693349:role/pharmawrk/PharmaWRK-Deploy-bms-prod
+      s3_bucket: pharmawrk-web-bms-prod-069371693349
+      cloudfront_distribution_id: E3QV75S632FB11
+      user_pool_id: ap-south-1_Y9VTK43qS
+      web_client_id: 2c2p7f8lscn8qngo80vuq8b7ip
+      graphql_endpoint: https://uqslozlpuvgv5eu2fjks7n7xce.appsync-api.ap-south-1.amazonaws.com/graphql

@@ -1,0 +1,84 @@
+name: Deploy BMS (one environment)
+
+# Reusable: called by deploy.yml once per environment. Builds the app with
+# that environment's public settings, uploads to its S3 bucket through the
+# GitHub OIDC role, and invalidates its CloudFront distribution.
+
+on:
+  workflow_call:
+    inputs:
+      environment: { type: string, required: true }
+      aws_region: { type: string, required: true }
+      deploy_role_arn: { type: string, required: true }
+      s3_bucket: { type: string, required: true }
+      cloudfront_distribution_id: { type: string, required: true }
+      user_pool_id: { type: string, required: true }
+      web_client_id: { type: string, required: true }
+      graphql_endpoint: { type: string, required: true }
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: deploy-bms-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      AWS_REGION: ${{ inputs.aws_region }}
+      S3_BUCKET: ${{ inputs.s3_bucket }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ inputs.cloudfront_distribution_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          # A variable of the same name in the GitHub environment overrides the default.
+          VUE_APP_AWS_COGNITO_USER_POOL_ID: ${{ vars.VUE_APP_AWS_COGNITO_USER_POOL_ID || inputs.user_pool_id }}
+          VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID: ${{ vars.VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID || inputs.web_client_id }}
+          VUE_APP_AWS_PROJECT_REGION: ${{ vars.VUE_APP_AWS_PROJECT_REGION || inputs.aws_region }}
+          VUE_APP_AWS_GRAPHQL_ENDPOINT: ${{ vars.VUE_APP_AWS_GRAPHQL_ENDPOINT || inputs.graphql_endpoint }}
+          VUE_APP_ESPER_CONSOLE_URL: ${{ vars.VUE_APP_ESPER_CONSOLE_URL }}
+        run: |
+          for v in VUE_APP_AWS_COGNITO_USER_POOL_ID VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID VUE_APP_AWS_PROJECT_REGION VUE_APP_AWS_GRAPHQL_ENDPOINT; do
+            if [ -z "${!v}" ]; then
+              echo "::error::$v is empty for environment '${{ inputs.environment }}'"
+              exit 1
+            fi
+          done
+          npm run build
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.deploy_role_arn }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Upload to S3
+        run: |
+          # Hashed assets: cache for a year. index.html and favicon: revalidate.
+          aws s3 sync dist/ "s3://$S3_BUCKET/" --delete \
+            --exclude index.html --exclude favicon.png \
+            --cache-control "public,max-age=31536000,immutable"
+          aws s3 cp dist/index.html "s3://$S3_BUCKET/index.html" \
+            --cache-control "no-cache" --content-type "text/html; charset=utf-8"
+          aws s3 cp dist/favicon.png "s3://$S3_BUCKET/favicon.png" \
+            --cache-control "public,max-age=3600"
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*"
