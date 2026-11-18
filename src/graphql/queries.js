@@ -207,11 +207,6 @@ export const ListNotificationsSettings = /* GraphQL */ `
     ListNotificationsSettings(input: $input)
   }
 `;
-export const ListDashboardGlobalRaydeoApiKeys = /* GraphQL */ `
-  query ListDashboardGlobalRaydeoApiKeys {
-    ListDashboardGlobalRaydeoApiKeys
-  }
-`;
 export const ListPOVs = /* GraphQL */ `
   query ListPOVs($input: ListPOVsInput) {
     ListPOVs(input: $input)

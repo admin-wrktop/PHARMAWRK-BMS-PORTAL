@@ -114,11 +114,6 @@ export const SendNotificationsToUsers = /* GraphQL */ `
     SendNotificationsToUsers(input: $input)
   }
 `;
-export const UpdateGlobalRaydeoApiKeys = /* GraphQL */ `
-  mutation UpdateGlobalRaydeoApiKeys($input: UpdateGlobalRaydeoApiKeysInput) {
-    UpdateGlobalRaydeoApiKeys(input: $input)
-  }
-`;
 export const UpdateOtpForUsers = /* GraphQL */ `
   mutation UpdateOtpForUsers($input: UpdateOtpForUsersInput) {
     UpdateOtpForUsers(input: $input)

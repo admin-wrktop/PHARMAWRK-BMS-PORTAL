@@ -188,94 +188,6 @@
                 class="font-weight-bold mt-n2"
               ></v-radio>
             </v-radio-group>
-            <!-- <v-row v-if="StoreObj.Action == 'EDIT'">
-              <v-col cols="12" md="6" xs="6" sm="6">
-                <v-card
-                  :color="
-                    Raydeo_dashboard_notification == true ? '#E0E0E0' : ''
-                  "
-                  class="elevation-0"
-                >
-                  <v-checkbox
-                    v-model="Raydeo_dashboard_notification"
-                    label="Enable Raydeo Dashboard Notification"
-                    class=""
-                  >
-                  </v-checkbox>
-                  <v-text-field
-                    v-if="Raydeo_dashboard_notification == true"
-                    variant="outlined"
-                    density="compact"
-                    label="Dashboard Channel API Key"
-                    class="mx-3"
-                    v-model="RaydeoAPI_Key"
-                    :rules="
-                      Raydeo_dashboard_notification == true
-                        ? [(v) => !!v || 'Required']
-                        : []
-                    "
-                  >
-                  </v-text-field>
-                  <v-text-field
-                    v-if="Raydeo_dashboard_notification == true"
-                    variant="outlined"
-                    density="compact"
-                    label="Dashboard X API Key"
-                    class="mx-3"
-                    v-model="Dashboard_X_API_Key"
-                    :rules="
-                      Raydeo_dashboard_notification == true
-                        ? [(v) => !!v || 'Required']
-                        : []
-                    "
-                  >
-                  </v-text-field>
-                </v-card>
-              </v-col>
-              <v-col cols="12" md="6" xs="6" sm="6">
-                <v-card
-                  :color="
-                    Raydeo_TicketTrail_notification == true ? '#E0E0E0' : ''
-                  "
-                  class="elevation-0"
-                >
-                  <v-checkbox
-                    v-model="Raydeo_TicketTrail_notification"
-                    label="Enable Raydeo Ticket Trail Notification"
-                    class=""
-                  >
-                  </v-checkbox>
-                  <v-text-field
-                    v-if="Raydeo_TicketTrail_notification == true"
-                    variant="outlined"
-                    density="compact"
-                    label="Ticket Trial Channel API Key"
-                    v-model="ticket_trail_channel_api_key"
-                    class="mx-3"
-                    :rules="
-                      Raydeo_TicketTrail_notification == true
-                        ? [(v) => !!v || 'Required']
-                        : []
-                    "
-                  >
-                  </v-text-field>
-                  <v-text-field
-                    v-if="Raydeo_TicketTrail_notification == true"
-                    class="mx-3"
-                    variant="outlined"
-                    density="compact"
-                    label="Ticket Trail X API Key"
-                    v-model="ticket_trail_x_api_key"
-                    :rules="
-                      Raydeo_TicketTrail_notification == true
-                        ? [(v) => !!v || 'Required']
-                        : []
-                    "
-                  >
-                  </v-text-field>
-                </v-card>
-              </v-col>
-            </v-row> -->
           </v-form>
         </v-card-text>
         <v-card-actions v-if="StoreObj.Action != 'VIEW'" class="pt-4 mb-2">
@@ -347,12 +259,6 @@ export default {
       { text: "EQUIPMENT", value: "EQUIPMENT" },
     ],
 
-    Raydeo_dashboard_notification: false,
-    RaydeoAPI_Key: "",
-    Dashboard_X_API_Key: "",
-    Raydeo_TicketTrail_notification: false,
-    ticket_trail_channel_api_key: "",
-    ticket_trail_x_api_key: "",
     POV_List_Type: "TERRITORY",
   }),
   watch: {

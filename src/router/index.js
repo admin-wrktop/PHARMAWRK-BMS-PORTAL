@@ -73,14 +73,6 @@ const routes = [
           ),
       },
       {
-        name: "Raydeo Settings",
-        path: "/RaydeoSettings",
-        component: () =>
-          import(
-            /* webpackChunkName: "MasterPOVList" */ "../views/ChildHomePages/RaydeoDashboard.vue"
-          ),
-      },
-      {
         name: "Set Users OTP",
         path: "/manualOTP",
         component: () =>

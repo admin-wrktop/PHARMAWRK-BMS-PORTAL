@@ -1,11 +1,11 @@
 <template>
   <div>
     <Overlay :overlay="overlay" />
-    <v-card class="mx-6" flat>
-      <v-card class="elevation-0 mt-6" variant="outlined">
+    <v-card class="bg-transparent" flat>
+      <v-card class="pw-card" flat>
         <v-row>
           <v-col cols="12" xs="12" sm="12" md="12">
-            <v-card variant="outlined" flat tile class="pa-3">
+            <v-card flat class="pa-3 bg-transparent">
               <v-row class="space-between">
                 <v-radio-group
                   inline
@@ -187,10 +187,10 @@
       </v-col>
     </v-card> -->
     </v-card>
-    <v-card flat class="mx-6 mt-6 slide-in-from-bottom">
+    <v-card flat class="mt-4 bg-transparent slide-in-from-bottom">
       <v-row>
         <v-col cols="12" xs="12" sm="12" md="12">
-          <v-card flat variant="outlined" class="pa-3">
+          <v-card flat class="pw-card pa-3">
             <apexchart
               v-if="mounted"
               height="270px"

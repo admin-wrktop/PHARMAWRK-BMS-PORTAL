@@ -1,0 +1,231 @@
+/*
+ * Legacy utility classes used across templates (moved here from App.vue).
+ * Class names are kept so existing pages keep working; values are aligned to
+ * the PharmaWRK design system (see design-system.css).
+ */
+
+/* ---------- font sizes ---------- */
+.FontSize,
+.fontsize12px {
+  font-size: 13px !important;
+}
+.FontSize8px {
+  font-size: 9px !important;
+}
+.fontsize9px {
+  font-size: 10px !important;
+}
+.fontsize10px,
+.fontSize {
+  font-size: 11px !important;
+}
+.fontSize11px,
+.fontsize11px {
+  font-size: 12px !important;
+}
+.fontsize13px {
+  font-size: 13px !important;
+}
+.fontsize14px {
+  font-size: 14px !important;
+}
+.fontsize20px {
+  font-size: 20px;
+}
+.fontsize30px {
+  font-size: 30px !important;
+}
+.fontsize40px {
+  font-size: 40px !important;
+}
+.FontSize10px {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+}
+.caption {
+  font-size: 12px !important;
+  line-height: 1.35;
+}
+
+/* ---------- widths ---------- */
+.MaxWidthVariant1 {
+  max-width: 150px !important;
+  font-size: 12px !important;
+}
+.MaxWidthVariant2 {
+  max-width: 300px !important;
+  font-size: 12px !important;
+}
+.maxWidthVariant1 {
+  max-width: 200px !important;
+  font-size: 10px !important;
+}
+.MaxFieldWidth {
+  max-width: 300px !important;
+}
+.SelectFieldWidth {
+  max-width: 200px !important;
+}
+.MaxWidthSearch {
+  max-width: 500px !important;
+}
+.CountryCodeMaxWidth {
+  max-width: 100px !important;
+}
+
+/* ---------- motion (subtle, respects reduced motion) ---------- */
+.slide-in-from-top {
+  animation: pwSlideInFromTop 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.slide-in-from-bottom {
+  animation: pwSlideInFromBottom 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes pwSlideInFromTop {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes pwSlideInFromBottom {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ---------- form fields ---------- */
+.v-input .v-label,
+.field_label_size.v-input .v-label {
+  font-size: 13px;
+}
+.FieldPointerCursor :hover {
+  cursor: pointer !important;
+}
+.small-select-menu .v-list-item-title {
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+.small-select-menu .v-list-item {
+  min-height: 38px !important;
+}
+.no-gap {
+  padding-left: 4px !important;
+}
+.no-gap .v-list-item__prepend {
+  margin-right: 4px !important;
+}
+
+/* ---------- tables ---------- */
+.TableClass td {
+  font-size: 12px !important;
+}
+.TableClass th {
+  font-size: 11px !important;
+}
+.TableDataClass td {
+  font-size: 12.5px !important;
+}
+.TableDataStyle th {
+  font-size: 11.5px !important;
+  color: rgba(var(--v-theme-on-surface), 0.66) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+}
+.TableDataStyle td {
+  font-size: 12.5px !important;
+}
+/* Row borders except last child and expanded content row */
+.tableBorderColor.v-data-table table tbody tr:not(.v-data-table__tr--expanded):not(:last-child) td {
+  border-top: 1px solid rgba(var(--v-border-color), 0.24) !important;
+  border-right: 1px solid rgba(var(--v-border-color), 0.24) !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+.tableBorderColor.v-data-table table tbody tr.v-data-table__tr--expanded td {
+  border-top: none !important;
+  box-shadow: none !important;
+  border-bottom: none !important;
+  background-color: transparent !important;
+}
+
+/* ---------- colour helpers ---------- */
+.TooltipColor {
+  background-color: rgb(var(--v-theme-primary)) !important;
+}
+.CardBorderRadius {
+  border-radius: 20px 4px 20px 4px !important;
+}
+.mdi-checkbox-marked::before {
+  content: "\F0132";
+  color: rgb(var(--v-theme-primary)) !important;
+}
+.v-date-picker-months__content .v-btn.v-btn--active {
+  border-radius: 8px !important;
+  background-color: rgb(var(--v-theme-primary)) !important;
+  color: rgb(var(--v-theme-on-primary)) !important;
+}
+
+/* Brand gradient — dialog headers, primary CTAs */
+.gradient-bg {
+  background: linear-gradient(
+    135deg,
+    #059669 0%,
+    #047857 55%,
+    #065f46 100%
+  ) !important;
+  color: #fff !important;
+}
+.gradient-btn {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+#content {
+  height: calc(100vh - 65px);
+  overflow-y: hidden;
+}
+
+/* ---------- BMS-only legacy classes (were in App.vue) ---------- */
+.FontSize13px {
+  font-size: 13px;
+}
+.FontSize20px {
+  font-size: 20px !important;
+}
+.MaxWidth {
+  max-width: 200px;
+}
+.DialogTrasition {
+  align-self: flex-start !important;
+}
+.gradient-back {
+  background: rgb(var(--v-theme-surface-light)) !important;
+}
+.OTPUsersSet {
+  font-size: 14px !important;
+  color: var(--pw-muted) !important;
+  font-weight: 600;
+}
+.cardBorder {
+  border-radius: var(--pw-radius) !important;
+}
+.CursorPointer {
+  cursor: pointer !important;
+}
+.SelectFontSize .v-list-item-title {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+.SelectFontSize .v-list-item {
+  min-height: 40px !important;
+}

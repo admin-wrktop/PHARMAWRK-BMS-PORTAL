@@ -8,11 +8,8 @@
       @clicked="RemoveOTPDialogEmit"
     />
     <v-row justify="center">
-      <v-col cols="12" md="11" xs="12" sm="12" class="mt-1">
-        <div class="font-weight-bold text-black" style="font-size: 25px">
-          Set OTP
-        </div>
-        <v-card class="elevation-0 mt-2">
+      <v-col cols="12" class="px-6 pt-4">
+        <v-card class="elevation-0">
           <v-card-text class="pa-0">
             <v-form ref="form">
               <v-row justify="center">
