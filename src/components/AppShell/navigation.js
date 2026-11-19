@@ -18,7 +18,6 @@ export const NAV_ITEMS = [
   H("Activity"),
   I("Visit Log", "mdi-map-marker-outline", "Visit Log"),
   I("Audit Log", "mdi-text-box-search-outline", "Audit Log"),
-  I("Bug Reports", "mdi-bug-outline", "BugReport"),
 ];
 
 export const PAGE_DESCRIPTIONS = {
@@ -29,7 +28,6 @@ export const PAGE_DESCRIPTIONS = {
   "Upload Templates": "Excel templates for bulk data uploads.",
   "Visit Log": "Field visits logged by reps, by organization and date.",
   "Audit Log": "Who changed what, and when.",
-  BugReport: "Bug reports submitted by users, by organization and month.",
   Notification: "Notification settings and messages sent to users.",
 };
 

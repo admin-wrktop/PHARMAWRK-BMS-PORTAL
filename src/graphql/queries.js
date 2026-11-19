@@ -254,8 +254,3 @@ export const GetOrganizationsMonthlyReports = /* GraphQL */ `
     GetOrganizationsMonthlyReports(input: $input)
   }
 `;
-export const ListBugReports = /* GraphQL */ `
-  query ListBugReports($input: ListBugReportsInput) {
-    ListBugReports(input: $input)
-  }
-`;

@@ -97,8 +97,3 @@ export const SendNotificationsToUsers = /* GraphQL */ `
     SendNotificationsToUsers(input: $input)
   }
 `;
-export const UpdateBugReport = /* GraphQL */ `
-  mutation UpdateBugReport($input: UpdateBugReportInput) {
-    UpdateBugReport(input: $input)
-  }
-`;

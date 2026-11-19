@@ -11,7 +11,6 @@
         <v-tab>TERRITORIES</v-tab>
         <v-tab>AUDIT LOGS</v-tab>
         <v-tab>Analytics</v-tab>
-        <!-- <v-tab>Bug Report</v-tab> -->
       </v-tabs>
       <v-spacer />
       <v-btn
@@ -1482,9 +1481,6 @@
             v-if="AnalyticsValue == 'DOCTOR_CONVERSION'"
           />
         </v-card>
-        <!-- <v-card v-if="tab == 8">
-          <BugReportCard :ActionObj="StoreObj" />
-        </v-card> -->
       </v-col>
     </v-row>
   </div>
@@ -1512,7 +1508,6 @@ import AttendanceReport from "@/components/Analytics/Cards/AttendanceReport.vue"
 import CMEReport from "@/components/Analytics/Cards/CMEReport.vue";
 import EdetailLogReport from "@/components/Analytics/Cards/EdetailLogs.vue";
 import DoctorConversionReport from "@/components/Analytics/Cards/DoctorConversionReport.vue";
-// import BugReportCard from "@/components/BugsReport/Cards/BugsReport.vue";
 
 import moment from "moment";
 import VueApexCharts from "vue3-apexcharts";
@@ -1530,7 +1525,6 @@ export default {
     CMEReport,
     EdetailLogReport,
     DoctorConversionReport,
-    // BugReportCard,
   },
   props: {
     StoreObj: Object,
@@ -1875,10 +1869,6 @@ export default {
         text: "Doctor Conversion",
         value: "DOCTOR_CONVERSION",
       },
-      // {
-      //   text: "Bug Reports",
-      //   value: "BUG_REPORTS",
-      // },
     ],
     AnalyticsValue: "ATTENDANCE_REPORT",
   }),

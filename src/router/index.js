@@ -74,15 +74,6 @@ const routes = [
             /* webpackChunkName: "MasterPOVList" */ "../views/ChildHomePages/UploadTemplates.vue"
           ),
       },
-
-      {
-        name: "BugReport",
-        path: "/BugReport",
-        component: () =>
-          import(
-            /* webpackChunkName: "Specialization" */ "../views/ChildHomePages/BugReportView.vue"
-          ),
-      },
     ],
   },
   { path: "/:pathMatch(.*)*", redirect: { name: "Dashboard" } },
