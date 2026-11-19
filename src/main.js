@@ -5,15 +5,17 @@ import { loadFonts } from "./plugins/webfontloader";
 import router from "./router";
 import store from "./store";
 import { Amplify } from "aws-amplify";
+import { loadConfig } from "./config";
 
 loadFonts();
 
 async function initApp() {
+  const cfg = await loadConfig();
   Amplify.configure({
     Auth: {
       Cognito: {
-        userPoolId: process.env.VUE_APP_AWS_COGNITO_USER_POOL_ID,
-        userPoolClientId: process.env.VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID,
+        userPoolId: cfg.userPoolId,
+        userPoolClientId: cfg.userPoolClientId,
         signUpVerificationMethod: "code",
         loginWith: {
           email: true,
@@ -23,14 +25,25 @@ async function initApp() {
 
     API: {
       GraphQL: {
-        endpoint: process.env.VUE_APP_AWS_GRAPHQL_ENDPOINT,
-        region: process.env.VUE_APP_AWS_PROJECT_REGION,
+        endpoint: cfg.graphqlEndpoint,
+        region: cfg.region,
         defaultAuthMode: "userPool",
       },
     },
   });
 }
 
-initApp().then(() => {
-  createApp(App).use(router).use(store).use(vuetify).mount("#app");
-});
+initApp().then(
+  () => {
+    createApp(App).use(router).use(store).use(vuetify).mount("#app");
+  },
+  (error) => {
+    console.error(error);
+    const el = document.getElementById("app");
+    if (el) {
+      el.textContent =
+        "PharmaWRK BMS could not load its configuration. Please refresh, or contact support if this continues.";
+      el.style.cssText = "font-family:system-ui,sans-serif;padding:48px 24px;text-align:center;color:#12353a";
+    }
+  }
+);

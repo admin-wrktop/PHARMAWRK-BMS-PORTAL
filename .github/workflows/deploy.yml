@@ -1,11 +1,15 @@
 name: Deploy BMS
 
-# DEV:  every push to main deploys to https://dev.bms.pharmawrk.com.
-# PROD: manual only. Actions -> Deploy BMS -> Run workflow -> environment "prod"
-#       (from main) deploys to https://prod.bms.pharmawrk.com.
+# Build once, deploy the same bytes everywhere. The bundle holds no
+# environment values; each environment gets its own /config.json only.
 #
-# The values below are public identifiers that ship in the browser bundle,
-# not secrets. A GitHub environment variable of the same name overrides them.
+# DEV:  every push to main builds and deploys to https://dev.bms.pharmawrk.com.
+# PROD: manual. Actions -> Deploy BMS -> Run workflow (branch main) ->
+#       environment "prod". It does NOT rebuild: it deploys the artifact from
+#       the latest successful DEV deploy on main (or the run id you give), so
+#       PROD gets exactly what DEV has.
+#
+# config.json values are public identifiers that ship to the browser anyway.
 
 on:
   push:
@@ -17,15 +21,42 @@ on:
         type: choice
         options: [dev, prod]
         default: dev
+      artifact_run_id:
+        description: "PROD only: run id whose build to deploy (empty = latest successful DEV deploy on main)"
+        type: string
+        default: ""
 
 permissions:
   id-token: write
   contents: read
+  actions: read
 
 jobs:
+  build:
+    name: Build
+    if: github.event_name == 'push' || inputs.environment == 'dev'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build (no environment values)
+        run: |
+          npm run build
+          rm -f dist/config.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bms-dist
+          path: dist
+          retention-days: 90
+          if-no-files-found: error
+
   deploy-dev:
     name: DEV
-    if: github.event_name == 'push' || inputs.environment == 'dev'
+    needs: build
     uses: ./.github/workflows/_deploy-env.yml
     with:
       environment: dev
@@ -33,13 +64,40 @@ jobs:
       deploy_role_arn: arn:aws:iam::875476618141:role/pharmawrk/PharmaWRK-Deploy-bms-dev
       s3_bucket: pharmawrk-web-bms-dev-875476618141
       cloudfront_distribution_id: E2NNIJLHEE8CWX
-      user_pool_id: ap-south-1_lc4CPMAp0
-      web_client_id: 7s4shkr6lsjs90fnba8mree4i4
-      graphql_endpoint: https://tu3vgr25zrf6bagaax6t35a56a.appsync-api.ap-south-1.amazonaws.com/graphql
+      config_json: >-
+        {"region":"ap-south-1",
+        "userPoolId":"ap-south-1_lc4CPMAp0",
+        "userPoolClientId":"7s4shkr6lsjs90fnba8mree4i4",
+        "graphqlEndpoint":"https://tu3vgr25zrf6bagaax6t35a56a.appsync-api.ap-south-1.amazonaws.com/graphql",
+        "esperConsoleUrl":"${{ vars.VUE_APP_ESPER_CONSOLE_URL }}"}
+
+  pick-prod-build:
+    name: Pick build for PROD
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      run_id: ${{ steps.pick.outputs.run_id }}
+    steps:
+      - id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          GIVEN: ${{ inputs.artifact_run_id }}
+        run: |
+          if [ -n "$GIVEN" ]; then
+            run_id="$GIVEN"
+          else
+            run_id=$(gh run list --workflow deploy.yml --branch main --event push \
+              --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          fi
+          [ -n "$run_id" ] || { echo "::error::No successful DEV deploy found to promote"; exit 1; }
+          sha=$(gh run view "$run_id" --json headSha --jq .headSha)
+          echo "Promoting build from run $run_id (commit $sha)" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
 
   deploy-prod:
     name: PROD
-    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod' && github.ref == 'refs/heads/main'
+    needs: pick-prod-build
     uses: ./.github/workflows/_deploy-env.yml
     with:
       environment: prod
@@ -47,6 +105,10 @@ jobs:
       deploy_role_arn: arn:aws:iam::069371693349:role/pharmawrk/PharmaWRK-Deploy-bms-prod
       s3_bucket: pharmawrk-web-bms-prod-069371693349
       cloudfront_distribution_id: E3QV75S632FB11
-      user_pool_id: ap-south-1_Y9VTK43qS
-      web_client_id: 2c2p7f8lscn8qngo80vuq8b7ip
-      graphql_endpoint: https://uqslozlpuvgv5eu2fjks7n7xce.appsync-api.ap-south-1.amazonaws.com/graphql
+      artifact_run_id: ${{ needs.pick-prod-build.outputs.run_id }}
+      config_json: >-
+        {"region":"ap-south-1",
+        "userPoolId":"ap-south-1_Y9VTK43qS",
+        "userPoolClientId":"2c2p7f8lscn8qngo80vuq8b7ip",
+        "graphqlEndpoint":"https://uqslozlpuvgv5eu2fjks7n7xce.appsync-api.ap-south-1.amazonaws.com/graphql",
+        "esperConsoleUrl":"${{ vars.VUE_APP_ESPER_CONSOLE_URL }}"}

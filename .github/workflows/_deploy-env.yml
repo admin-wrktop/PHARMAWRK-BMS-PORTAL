@@ -1,8 +1,8 @@
 name: Deploy BMS (one environment)
 
-# Reusable: called by deploy.yml once per environment. Builds the app with
-# that environment's public settings, uploads to its S3 bucket through the
-# GitHub OIDC role, and invalidates its CloudFront distribution.
+# Reusable: deploys an already-built `bms-dist` artifact to one environment.
+# Nothing is built here, so every environment receives the same bytes. The
+# only per-environment file is /config.json, written from the inputs below.
 
 on:
   workflow_call:
@@ -12,53 +12,50 @@ on:
       deploy_role_arn: { type: string, required: true }
       s3_bucket: { type: string, required: true }
       cloudfront_distribution_id: { type: string, required: true }
-      user_pool_id: { type: string, required: true }
-      web_client_id: { type: string, required: true }
-      graphql_endpoint: { type: string, required: true }
+      config_json: { type: string, required: true }
+      artifact_run_id:
+        description: Run that built the artifact (empty = this run)
+        type: string
+        default: ""
+    outputs:
+      manifest_sha256:
+        description: SHA-256 of the bucket's file list + hashes (config.json excluded)
+        value: ${{ jobs.deploy.outputs.manifest_sha256 }}
 
 permissions:
   id-token: write
   contents: read
+  actions: read
 
 jobs:
   deploy:
-    name: Build and deploy
+    name: Deploy
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     concurrency:
       group: deploy-bms-${{ inputs.environment }}
       cancel-in-progress: false
+    outputs:
+      manifest_sha256: ${{ steps.verify.outputs.manifest_sha256 }}
     env:
-      AWS_REGION: ${{ inputs.aws_region }}
       S3_BUCKET: ${{ inputs.s3_bucket }}
-      CLOUDFRONT_DISTRIBUTION_ID: ${{ inputs.cloudfront_distribution_id }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
         with:
-          node-version: 22
-          cache: npm
+          name: bms-dist
+          path: dist
+          run-id: ${{ inputs.artifact_run_id || github.run_id }}
+          github-token: ${{ github.token }}
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
+      - name: Write config.json
         env:
-          # A variable of the same name in the GitHub environment overrides the default.
-          VUE_APP_AWS_COGNITO_USER_POOL_ID: ${{ vars.VUE_APP_AWS_COGNITO_USER_POOL_ID || inputs.user_pool_id }}
-          VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID: ${{ vars.VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID || inputs.web_client_id }}
-          VUE_APP_AWS_PROJECT_REGION: ${{ vars.VUE_APP_AWS_PROJECT_REGION || inputs.aws_region }}
-          VUE_APP_AWS_GRAPHQL_ENDPOINT: ${{ vars.VUE_APP_AWS_GRAPHQL_ENDPOINT || inputs.graphql_endpoint }}
-          VUE_APP_ESPER_CONSOLE_URL: ${{ vars.VUE_APP_ESPER_CONSOLE_URL }}
+          CONFIG_JSON: ${{ inputs.config_json }}
         run: |
-          for v in VUE_APP_AWS_COGNITO_USER_POOL_ID VUE_APP_AWS_USER_POOL_WEB_CLIENT_ID VUE_APP_AWS_PROJECT_REGION VUE_APP_AWS_GRAPHQL_ENDPOINT; do
-            if [ -z "${!v}" ]; then
-              echo "::error::$v is empty for environment '${{ inputs.environment }}'"
-              exit 1
-            fi
-          done
-          npm run build
+          test ! -e dist/config.json || { echo "::error::artifact must not contain config.json"; exit 1; }
+          echo "$CONFIG_JSON" | jq -e '.region and .userPoolId and .userPoolClientId and .graphqlEndpoint' > /dev/null
+          echo "$CONFIG_JSON" | jq . > "$RUNNER_TEMP/config.json"
+          cat "$RUNNER_TEMP/config.json"
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -68,17 +65,39 @@ jobs:
 
       - name: Upload to S3
         run: |
-          # Hashed assets: cache for a year. index.html and favicon: revalidate.
+          # Hashed assets: cache for a year. index.html, favicon, config.json: revalidate.
           aws s3 sync dist/ "s3://$S3_BUCKET/" --delete \
-            --exclude index.html --exclude favicon.png \
+            --exclude index.html --exclude favicon.png --exclude config.json \
             --cache-control "public,max-age=31536000,immutable"
           aws s3 cp dist/index.html "s3://$S3_BUCKET/index.html" \
             --cache-control "no-cache" --content-type "text/html; charset=utf-8"
           aws s3 cp dist/favicon.png "s3://$S3_BUCKET/favicon.png" \
             --cache-control "public,max-age=3600"
+          aws s3 cp "$RUNNER_TEMP/config.json" "s3://$S3_BUCKET/config.json" \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --content-type "application/json; charset=utf-8"
 
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --distribution-id "${{ inputs.cloudfront_distribution_id }}" \
             --paths "/*"
+
+      - name: Verify bucket matches the artifact
+        id: verify
+        run: |
+          manifest() { (cd "$1" && find . -type f ! -path ./config.json -print0 | sort -z | xargs -0 sha256sum); }
+          aws s3 sync "s3://$S3_BUCKET/" "$RUNNER_TEMP/bucket" --exclude config.json --only-show-errors
+          manifest dist > "$RUNNER_TEMP/artifact.sha256"
+          manifest "$RUNNER_TEMP/bucket" > "$RUNNER_TEMP/bucket.sha256"
+          if ! diff -u "$RUNNER_TEMP/artifact.sha256" "$RUNNER_TEMP/bucket.sha256"; then
+            echo "::error::s3://$S3_BUCKET differs from the build artifact"
+            exit 1
+          fi
+          sum=$(sha256sum "$RUNNER_TEMP/bucket.sha256" | cut -d' ' -f1)
+          echo "manifest_sha256=$sum" >> "$GITHUB_OUTPUT"
+          {
+            echo "### ${{ inputs.environment }}: s3://$S3_BUCKET"
+            echo "Files (excluding config.json): $(wc -l < "$RUNNER_TEMP/bucket.sha256")"
+            echo "Manifest SHA-256: \`$sum\`"
+          } >> "$GITHUB_STEP_SUMMARY"
