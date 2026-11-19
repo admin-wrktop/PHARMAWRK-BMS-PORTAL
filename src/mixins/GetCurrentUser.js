@@ -17,11 +17,6 @@ export const GetCurrentUser = {
 
         let result = await client.graphql({
           query: GetCurrentUserDetails,
-          variables: {
-            input: {
-              user_email_id: this.$store.getters.get_user_email,
-            },
-          },
         });
         console.log("result", result);
         var StoreArray = JSON.parse(result.data.GetCurrentUserDetails);

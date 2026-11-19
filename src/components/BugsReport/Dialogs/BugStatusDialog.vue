@@ -172,7 +172,6 @@ export default {
       try {
         this.loading = true;
         var inputParams = {
-          updater_user_id: this.$store.getters.get_current_user_details.user_id,
           bug_id: this.StoreageObj.bug_id,
           bug_status: "FIXED",
           fixed_on: this.fixedOnEpoch,

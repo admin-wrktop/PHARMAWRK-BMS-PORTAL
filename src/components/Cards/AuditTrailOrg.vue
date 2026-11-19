@@ -2327,7 +2327,6 @@ export default {
           variables: {
             input: {
               organization_id: this.StoreObj.organization_id,
-              user_id: this.$store.getters.get_current_user_details.user_id,
             },
           },
         });
@@ -2453,7 +2452,6 @@ export default {
           variables: {
             input: {
               organization_id: this.StoreObj.organization_id,
-              user_id: this.$store.getters.get_current_user_details.user_id,
               from_date: from_date,
               to_date: to_date,
               pov_type: pov_type,

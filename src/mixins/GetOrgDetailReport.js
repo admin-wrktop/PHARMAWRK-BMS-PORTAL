@@ -14,7 +14,6 @@ export const GetOrgReports = {
           variables: {
             input: {
               organization_id: organization_name,
-              user_id: User_id,
               from_date,
               to_date,
             },

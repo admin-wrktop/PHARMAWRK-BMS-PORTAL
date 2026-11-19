@@ -882,7 +882,6 @@ export default {
           query: ListAllDesignation,
           variables: {
             input: {
-              setting_status: "ACTIVE",
               organization_id: this.ActionObj.organization_id,
             },
           },

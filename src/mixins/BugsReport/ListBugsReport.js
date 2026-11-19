@@ -14,7 +14,6 @@ export const GetBugsReportMixin = {
           query: ListBugReports,
           variables: {
             input: {
-              user_id: this.$store.getters.get_current_user_details.user_id,
               organization_id: Organization_id,
               bug_month: Month,
               next_token: NextToken,

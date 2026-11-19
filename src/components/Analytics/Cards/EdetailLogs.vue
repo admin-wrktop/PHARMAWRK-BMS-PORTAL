@@ -601,7 +601,6 @@ export default {
           query: ListAllEDetailLogs,
           variables: {
             input: {
-              user_id: this.ActionObj.user_id,
               organization_id: this.ActionObj.organization_id,
               from_date: fromdate,
               to_date: todate,

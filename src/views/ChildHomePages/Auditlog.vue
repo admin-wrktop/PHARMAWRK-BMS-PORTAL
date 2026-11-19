@@ -365,7 +365,6 @@ export default {
               from_date: FromDate,
               to_date: ToDate,
               log_type: this.audit_log.replace(" ", "_"),
-              user_id: this.$store.getters.get_current_user_details.user_id,
             },
           },
         });

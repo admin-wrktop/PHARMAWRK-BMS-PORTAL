@@ -141,8 +141,6 @@ export default {
         this.loading = true;
         var inputparams = {
           setting_name: this.notification_text,
-          organization_id: this.GetCurrentUserDetailsObj.organization_id,
-          updater_user_id: this.GetCurrentUserDetailsObj.user_id,
           setting_id: this.StoreObj.setting_id,
           notification_subject: this.notification_subject,
         };
@@ -184,8 +182,6 @@ export default {
         this.loading = true;
         var inputparams = {
           setting_name: this.notification_text,
-          organization_id: this.GetCurrentUserDetailsObj.organization_id,
-          creator_user_id: this.GetCurrentUserDetailsObj.user_id,
           notification_subject: this.notification_subject,
         };
         let result = await client.graphql({

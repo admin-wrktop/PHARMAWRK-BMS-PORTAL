@@ -294,7 +294,6 @@ export default {
           query: ListNotificationsSettings,
           variables: {
             input: {
-              user_id: this.$store.getters.get_current_user_details.user_id,
               setting_status: this.setting_status,
             },
           },

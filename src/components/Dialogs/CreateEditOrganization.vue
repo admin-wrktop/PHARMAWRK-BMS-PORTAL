@@ -342,7 +342,6 @@ export default {
           povs_listing_type: this.POV_List_Type,
           enable_pov_map_or_unmap_in_users_pov:
             this.create_edit_org.Enable_POV_Map,
-          updater_user_id: this.$store.getters.get_current_user_details.user_id,
           enable_to_generate_povs_visit_reports:
             this.create_edit_org.EnableGeneratePOVVisitReport,
         };

@@ -7,8 +7,8 @@ export const ListBMSUsers = /* GraphQL */ `
   }
 `;
 export const GetCurrentUserDetails = /* GraphQL */ `
-  query GetCurrentUserDetails($input: GetCurrentUserDetailsInput) {
-    GetCurrentUserDetails(input: $input)
+  query GetCurrentUserDetails {
+    GetCurrentUserDetails
   }
 `;
 export const ListOrganizations = /* GraphQL */ `

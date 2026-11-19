@@ -262,7 +262,6 @@ export default {
       try {
         this.loading = true;
         var inputparams = {
-          sender_user_id: this.$store.getters.get_current_user_details.user_id,
           organization_id: this.organization_name,
           user_ids: this.UserType == "ALL" ? undefined : this.userName,
           setting_id: this.StoreObj.setting_id,
@@ -310,8 +309,7 @@ export default {
         let result = await client.graphql({
           query: ListUsersOfOrganization,
           variables: {
-            organization_id: this.organization_name,
-            user_id: this.$store.getters.get_current_user_details.user_id,
+            input: { organization_id: this.organization_name },
           },
         });
         var StoreArray = JSON.parse(result.data.ListUsersOfOrganization);
@@ -343,9 +341,7 @@ export default {
         let result = await client.graphql({
           query: ListNotificationsSettings,
           variables: {
-            organization_id:
-              this.$store.getters.get_current_user_details.organization_id,
-            setting_status: "ACTIVE",
+            input: { setting_status: "ACTIVE" },
           },
         });
         var self = this;

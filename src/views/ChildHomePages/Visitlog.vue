@@ -1081,7 +1081,6 @@ export default {
           variables: {
             input: {
               organization_id: this.organization_name,
-              user_id: this.$store.getters.get_current_user_details.user_id,
               from_date: fromdate,
               to_date: todate,
               designation_name: designation == "ALL" ? undefined : designation,
@@ -1158,7 +1157,6 @@ export default {
           query: ListAllDesignation,
           variables: {
             input: {
-              user_id: this.$store.getters.get_current_user_details.user_id,
               organization_id: this.organization_name,
             },
           },
@@ -1186,7 +1184,6 @@ export default {
           variables: {
             input: {
               organization_id: this.organization_name,
-              user_id: this.$store.getters.get_current_user_details.user_id,
             },
           },
         });

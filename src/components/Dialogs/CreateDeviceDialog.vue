@@ -266,7 +266,6 @@ export default {
       try {
         this.loading = true;
         var inputparams = {
-          creator_user_id: this.GetCurrentUserDetailsObj.user_id,
           device_model: this.create_edit_div.device_model,
           on_boarded_on: this.date,
           imei_number: this.create_edit_div.imei_number,
@@ -278,7 +277,7 @@ export default {
           this.create_edit_div.user_name != "" &&
           this.create_edit_div.user_name != undefined
         ) {
-          inputparams.user_id = this.create_edit_div.user_name.user_id;
+          inputparams.target_user_id = this.create_edit_div.user_name.user_id;
         }
         if (
           this.create_edit_div.organization != null &&
@@ -360,6 +359,7 @@ export default {
           this.create_edit_div.user_name != undefined
         ) {
           inputparams.user_name = this.create_edit_div.user_name.user_name;
+          inputparams.target_user_id = this.create_edit_div.user_name.user_id;
         }
         if (
           this.create_edit_div.organization != null &&

@@ -472,7 +472,6 @@ export default {
             input: {
               month: Month,
               organization_id: this.ActionObj.organization_id,
-              user_id: this.ActionObj.user_id,
               cme_scheduled_status: this.CMEStatus,
               event_host_user_id:
                 this.FilterHost != undefined ? this.FilterHost.user_id : null,
@@ -532,7 +531,6 @@ export default {
           variables: {
             input: {
               organization_id: this.ActionObj.organization_id,
-              user_id: this.ActionObj.user_id,
               user_type: user_type,
               user_status: "ACTIVE",
             },
