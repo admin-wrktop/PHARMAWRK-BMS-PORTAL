@@ -102,3 +102,13 @@ export const SupportCases = /* GraphQL */ `
     SupportCases(command: $command, payload: $payload)
   }
 `;
+export const SetUserOtp = /* GraphQL */ `
+  mutation SetUserOtp($input: SetUserOtpInput!) {
+    SetUserOtp(input: $input)
+  }
+`;
+export const RemoveUserOtp = /* GraphQL */ `
+  mutation RemoveUserOtp($input: RemoveUserOtpInput!) {
+    RemoveUserOtp(input: $input)
+  }
+`;

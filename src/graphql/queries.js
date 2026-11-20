@@ -254,3 +254,8 @@ export const GetOrganizationsMonthlyReports = /* GraphQL */ `
     GetOrganizationsMonthlyReports(input: $input)
   }
 `;
+export const ListUserOtps = /* GraphQL */ `
+  query ListUserOtps($input: ListUserOtpsInput) {
+    ListUserOtps(input: $input)
+  }
+`;

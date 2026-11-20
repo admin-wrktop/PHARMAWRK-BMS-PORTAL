@@ -1,0 +1,75 @@
+/**
+ * Set Users OTP: fixed sign-in codes for specific mobile users (BMS admins
+ * only). Contract: set-users-otp-API.md (backend 4e57961). The backend never
+ * returns a saved code — it is stored only as a salted hash.
+ */
+import { generateClient } from "aws-amplify/api";
+import { ListUserOtps, ListUsersOfOrganization } from "@/graphql/queries.js";
+import { SetUserOtp, RemoveUserOtp } from "@/graphql/mutations.js";
+
+const client = generateClient();
+
+function messageOf(error) {
+  return (
+    (error && error.errors && error.errors[0] && error.errors[0].message) ||
+    (error && error.message) ||
+    "Something went wrong. Please try again."
+  );
+}
+
+async function run(query, field, input, mockCommand) {
+  if (process.env.NODE_ENV === "development") {
+    const { userOtpMock } = require("@/dev/userOtpMock");
+    const mocked = userOtpMock(mockCommand, input);
+    if (mocked !== undefined) return mocked;
+  }
+  try {
+    const result = await client.graphql({ query, variables: { input } });
+    const raw = result.data[field];
+    return typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch (error) {
+    throw new Error(messageOf(error));
+  }
+}
+
+/** Active codes (newest first); pass include_expired to see expired ones too. */
+export async function listUserOtps({ include_expired = false, organization_id } = {}) {
+  const res = await run(ListUserOtps, "ListUserOtps", { include_expired, organization_id }, "list");
+  return (res && res.data && res.data.items) || [];
+}
+
+/** { organization_id, target_user_id, otp (6 digits), expires_in_days (1-30), reason (3-200) } */
+export const setUserOtp = (input) => run(SetUserOtp, "SetUserOtp", input, "set");
+
+export const removeUserOtp = (target_user_id) =>
+  run(RemoveUserOtp, "RemoveUserOtp", { target_user_id }, "remove");
+
+/** Users of one organisation, for the user picker. */
+export async function listOrgUsers(organization_id) {
+  const res = await run(ListUsersOfOrganization, "ListUsersOfOrganization", { organization_id }, "users");
+  return (res && res.data && (res.data.Items || res.data.items)) || [];
+}
+
+/** Client-side check matching the backend rules. Returns an error string or "". */
+export function otpProblem(otp) {
+  if (!/^\d{6}$/.test(otp || "")) return "Exactly 6 digits";
+  if (/^(\d)\1{5}$/.test(otp)) return "Can't be one repeated digit";
+  const d = otp.split("").map(Number);
+  const step = d[1] - d[0];
+  if ((step === 1 || step === -1) && d.every((x, i) => i === 0 || x - d[i - 1] === step)) {
+    return "Can't be a straight run like 123456";
+  }
+  return "";
+}
+
+/** Active organisations for the organisation picker. */
+export async function listActiveOrgs() {
+  if (process.env.NODE_ENV === "development") {
+    const { userOtpMock } = require("@/dev/userOtpMock");
+    const mocked = userOtpMock("orgs", {});
+    if (mocked !== undefined) return mocked;
+  }
+  const { ListOrganizations } = await import("@/graphql/queries.js");
+  const result = await client.graphql({ query: ListOrganizations });
+  return JSON.parse(result.data.ListOrganizations).data.Items || [];
+}

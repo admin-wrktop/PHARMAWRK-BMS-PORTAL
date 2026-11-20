@@ -75,6 +75,14 @@ const routes = [
           ),
       },
       {
+        name: "Set Users OTP",
+        path: "/SetUsersOTP",
+        component: () =>
+          import(
+            /* webpackChunkName: "SetUsersOtp" */ "../views/ChildHomePages/SetUsersOtp.vue"
+          ),
+      },
+      {
         name: "Support Cases",
         path: "/SupportCases",
         component: () =>

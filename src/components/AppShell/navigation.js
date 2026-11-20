@@ -14,6 +14,7 @@ export const NAV_ITEMS = [
   I("Device Management", "mdi-cellphone-cog", "Device"),
   I("Data Templates", "mdi-database-import-outline", "Upload Templates"),
   I("Notifications", "mdi-bell-outline", "Notification"),
+  I("Set Users OTP", "mdi-shield-key-outline", "Set Users OTP"),
 
   H("Activity"),
   I("Visit Log", "mdi-map-marker-outline", "Visit Log"),
@@ -32,6 +33,8 @@ export const PAGE_DESCRIPTIONS = {
   "Visit Log": "Field visits logged by reps, by organization and date.",
   "Audit Log": "Who changed what, and when.",
   Notification: "Notification settings and messages sent to users.",
+  "Set Users OTP":
+    "Fixed sign-in codes for specific users, with an expiry. Every change is audit-logged.",
   "Support Cases":
     "Issues reported by Portal and Mobile users. Reply, add internal notes and track each case to resolution.",
 };
