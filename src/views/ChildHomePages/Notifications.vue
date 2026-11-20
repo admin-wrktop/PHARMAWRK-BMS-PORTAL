@@ -306,7 +306,9 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        // this.NoData = error.errors[0].message;
+        this.NoData =
+          (error && error.errors && error.errors[0] && error.errors[0].message) ||
+          "No notifications found";
         console.log("error", error);
       }
     },

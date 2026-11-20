@@ -236,6 +236,7 @@
 </template>
 
 <script>
+import { activeOrgsSorted, pickDefaultOrg, rememberOrg } from "@/utils/orgDefaults.js";
 import moment from "moment";
 import Overlay from "@/components/Overlay.vue";
 
@@ -251,7 +252,7 @@ export default {
     GetCurrentUserDetailsObj: Object,
   },
   data: () => ({
-    organization_name: "4fc95aed-392c-455f-86ac-b9a0882d8666",
+    organization_name: "",
     AuditType: ["POV MANAGEMENT", "USER MANAGEMENT"],
     audit_log: "POV MANAGEMENT",
     search: "",
@@ -306,7 +307,8 @@ export default {
       );
     },
 
-    organization_name() {
+    organization_name(val) {
+      rememberOrg(val);
       this.AuditLog(
         new Date(this.FromDateValue).getTime(),
         new Date(this.ToDateValue).getTime(),
@@ -345,6 +347,7 @@ export default {
     },
 
     async AuditLog(FromDate, ToDate) {
+      if (!this.organization_name) return;
       console.log("dsdcsfsd", this.audit_log);
       console.log("FromDate", FromDate);
       console.log("ToDate", ToDate);
@@ -424,9 +427,8 @@ export default {
         this.OrganizationList = StoreArray.data.Items;
         console.log("orgggggg", this.OrganizationList);
         this.filterarray = [];
-        this.filterarray = this.OrganizationList.filter(
-          (org) => org.organization_status == "ACTIVE",
-        );
+        this.filterarray = activeOrgsSorted(this.OrganizationList);
+        this.organization_name = pickDefaultOrg(this.filterarray, this.organization_name);
         if (this.filterarray.length == 0) {
           this.NoData = "No Organization Found";
         }

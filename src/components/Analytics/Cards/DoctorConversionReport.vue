@@ -74,7 +74,7 @@
                 label="Role"
                 v-model="designation"
                 :items="DesignationList"
-                @change="getFilters()"
+                @update:model-value="getFilters()"
               >
               </v-select> -->
           <!-- <v-select
@@ -271,6 +271,7 @@ import moment from "moment";
 import {
   ListPOVConversionReport,
   ListOrganizationUsers,
+  ListAllDesignation,
   ListPOVRemarks,
   ListAllCatalogs,
 } from "@/graphql/queries.js";
@@ -749,16 +750,15 @@ export default {
         this.overlay = true;
         this.DesignationList = [];
         let result = await client.graphql({
-          query: ListAllDesignations,
+          query: ListAllDesignation,
           variables: {
             input: {
-              setting_status: "ACTIVE",
               organization_id: this.GetCurrentUserDetailsObj.organization_id,
             },
           },
         });
         var self = this;
-        var StoreArray = JSON.parse(result.data.ListAllDesignations);
+        var StoreArray = JSON.parse(result.data.ListAllDesignation);
         self.new_destinationlist = StoreArray.data.items;
         self.DesignationList = StoreArray.data.items;
         self.DesignationList.push("ALL");

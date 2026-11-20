@@ -98,7 +98,7 @@
               variant="outlined"
               density="compact"
               :rules="[(v) => !!v || '']"
-              @change="fetchTimezones"
+              @update:model-value="fetchTimezones()"
               return-object
             ></v-autocomplete>
 

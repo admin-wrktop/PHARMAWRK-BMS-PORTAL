@@ -115,7 +115,7 @@
               label="Role"
               v-model="designation"
               :items="DesignationList"
-              @change="getMarkettingFilter()"
+              @update:model-value="getMarkettingFilter()"
               class="ml-1 mt-6"
               :menu-props="{ contentClass: 'SelectFontSize' }"
             >
@@ -129,7 +129,7 @@
               label="Employee"
               v-model="employe"
               :items="UserList"
-              @change="getMarkettingFilter()"
+              @update:model-value="getMarkettingFilter()"
               class="ml-1 mt-6"
               :menu-props="{ contentClass: 'SelectFontSize' }"
             >
@@ -144,7 +144,7 @@
               label="Pov Type"
               item-title="text"
               item-value="value"
-              @change="getMarkettingFilter()"
+              @update:model-value="getMarkettingFilter()"
               :menu-props="{ contentClass: 'SelectFontSize' }"
             >
             </v-select>
@@ -158,7 +158,7 @@
               :items="filterarray"
               item-title="organization_name"
               item-value="organization_id"
-              @change="getMarkettingFilter1()"
+              @update:model-value="getMarkettingFilter1()"
             >
             </v-autocomplete>
 
@@ -647,6 +647,7 @@
 </template>
 
 <script>
+import { activeOrgsSorted, pickDefaultOrg, rememberOrg } from "@/utils/orgDefaults.js";
 import PovConversionDialog1 from "@/components/Report/PovConversionDialog1.vue";
 import PovConversion from "@/components/Report/PovConversion.vue";
 import Overlay from "@/components/Overlay.vue";
@@ -682,7 +683,7 @@ export default {
     StoreObj: {},
     pov_conversion_dialog: false,
     pov_conversion_dialog1: false,
-    organization_name: "4fc95aed-392c-455f-86ac-b9a0882d8666",
+    organization_name: "",
     filterarray: [],
     designation: "ALL",
     employe: "ALL",
@@ -895,20 +896,9 @@ export default {
     //   59
     // ).getTime();
 
+    // Designations, users and visits load once the organisation list has
+    // picked a default organisation (see getOrganizationLists).
     this.getOrganizationLists();
-    this.getDesignationLists();
-    this.getUsersLists();
-
-    // setTimeout(() => {
-    this.getvisitreport(
-      new Date(this.FromDateValue).getTime(),
-      new Date(this.ToDateValue).getTime(),
-      this.designation,
-      this.employe,
-      this.povList,
-      null,
-    );
-    // }, 200);
   },
 
   watch: {
@@ -1001,6 +991,7 @@ export default {
     },
 
     getMarkettingFilter1() {
+      rememberOrg(this.organization_name);
       // var toDatetimestamp = new Date(
       //   this.ToDate.split("-")[0],
       //   this.ToDate.split("-")[1] - 1,
@@ -1072,6 +1063,7 @@ export default {
       povList,
       next_token,
     ) {
+      if (!this.organization_name) return;
       try {
         this.overlay = true;
         this.loading = true;
@@ -1135,9 +1127,9 @@ export default {
         this.OrganizationList = StoreArray.data.Items;
         // console.log("orgggggg", this.OrganizationList);
         this.filterarray = [];
-        this.filterarray = this.OrganizationList.filter(
-          (org) => org.organization_status == "ACTIVE",
-        );
+        this.filterarray = activeOrgsSorted(this.OrganizationList);
+        this.organization_name = pickDefaultOrg(this.filterarray, this.organization_name);
+        if (this.organization_name) this.getMarkettingFilter1();
         if (this.filterarray.length == 0) {
           this.NoData = "No Organization Found";
         }
@@ -1149,6 +1141,7 @@ export default {
     },
 
     async getDesignationLists() {
+      if (!this.organization_name) return;
       try {
         this.overlay = true;
         this.DesignationList = [];
@@ -1174,6 +1167,7 @@ export default {
     },
 
     async getUsersLists() {
+      if (!this.organization_name) return;
       try {
         this.overlay = true;
         this.UserList = [];

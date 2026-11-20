@@ -102,7 +102,7 @@
             label="Role"
             v-model="designation"
             :items="DesignationList"
-            @change="getFilters()"
+            @update:model-value="getFilters()"
           ></v-select> -->
           <v-select
             item-title="user_name"
@@ -296,8 +296,8 @@ import Overlay from "@/components/Overlay.vue";
 import moment from "moment";
 import {
   ListAllEDetailLogs,
-  ListAllDesignations,
-  ListUsers,
+  ListAllDesignation,
+  ListOrganizationUsers,
 } from "@/graphql/queries.js";
 // import ViewEDetailsLogs from "@/components/Report/ViewEDetailsLogs.vue";
 import { DownloadExcel } from "@/mixins/Extras/DownloadExcel.js";
@@ -660,7 +660,7 @@ export default {
         this.filtereduser = [];
 
         let result = await client.graphql({
-          query: ListUsers,
+          query: ListOrganizationUsers,
           variables: {
             input: {
               organization_id: this.ActionObj.organization_id,
@@ -670,7 +670,7 @@ export default {
             },
           },
         });
-        var StoreArray = JSON.parse(result.data.ListUsers);
+        var StoreArray = JSON.parse(result.data.ListOrganizationUsers);
         this.UserList = StoreArray.data.Items;
         this.UserList.unshift("ALL");
         this.overlay = false;
@@ -686,16 +686,15 @@ export default {
         this.DesignationList = [];
 
         let result = await client.graphql({
-          query: ListAllDesignations,
+          query: ListAllDesignation,
           variables: {
             input: {
-              setting_status: "ACTIVE",
               organization_id: this.ActionObj.organization_id,
             },
           },
         });
         var self = this;
-        var StoreArray = JSON.parse(result.data.ListAllDesignations);
+        var StoreArray = JSON.parse(result.data.ListAllDesignation);
         self.DesignationList = StoreArray.data.items;
         self.DesignationList.unshift("ALL");
         this.overlay = false;

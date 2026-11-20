@@ -67,7 +67,7 @@
               :items="filterarray"
               item-title="organization_name"
               item-value="organization_id"
-              @change="UserNameFilter()"
+              @update:model-value="UserNameFilter()"
             >
             </v-autocomplete>
 
@@ -138,6 +138,7 @@
   </div>
 </template>
 <script>
+import { activeOrgsSorted, pickDefaultOrg } from "@/utils/orgDefaults.js";
 import { SendNotificationsToUsers } from "@/graphql/mutations.js";
 
 import {
@@ -160,7 +161,7 @@ export default {
     SnackBar,
   },
   data: () => ({
-    organization_name: "03365610-5b7e-4c99-9f3b-d1d537122579",
+    organization_name: "",
     filterarray: [],
     UserType: "ALL",
     Toggle: 0,
@@ -235,9 +236,12 @@ export default {
         var StoreArray = JSON.parse(result.data.ListOrganizations);
         this.OrganizationList = StoreArray.data.Items;
         this.filterarray = [];
-        this.filterarray = this.OrganizationList.filter(
-          (org) => org.organization_status == "ACTIVE",
-        );
+        this.filterarray = activeOrgsSorted(this.OrganizationList);
+        const picked = pickDefaultOrg(this.filterarray, this.organization_name);
+        if (picked !== this.organization_name) {
+          this.organization_name = picked;
+          this.getUsersLists();
+        }
         if (this.filterarray.length == 0) {
           this.NoData = "No Organization Found";
         }
@@ -301,6 +305,7 @@ export default {
       }
     },
     async getUsersLists() {
+      if (!this.organization_name) return;
       try {
         this.overlay = true;
         this.UserList = [];

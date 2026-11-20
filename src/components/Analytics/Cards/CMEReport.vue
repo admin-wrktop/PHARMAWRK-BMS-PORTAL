@@ -305,8 +305,8 @@
 <script>
 import {
   ListScheduledCMEs,
-  ListAllDesignations,
-  ListUsers,
+  ListAllDesignation,
+  ListOrganizationUsers,
 } from "@/graphql/queries.js";
 import Overlay from "@/components/Overlay.vue";
 // import { parseTime } from "@/utils";
@@ -500,16 +500,15 @@ export default {
         this.DesignationList = [];
 
         let result = await client.graphql({
-          query: ListAllDesignations,
+          query: ListAllDesignation,
           variables: {
             input: {
-              setting_status: "ACTIVE",
               organization_id: this.ActionObj.organization_id,
             },
           },
         });
         var self = this;
-        var StoreArray = JSON.parse(result.data.ListAllDesignations);
+        var StoreArray = JSON.parse(result.data.ListAllDesignation);
         self.DesignationList = StoreArray.data.items;
         // console.log("self.DesignationList", self.DesignationList);
         self.DesignationList.unshift("ALL");
@@ -527,7 +526,7 @@ export default {
         this.filtereduser = [];
 
         let result = await client.graphql({
-          query: ListUsers,
+          query: ListOrganizationUsers,
           variables: {
             input: {
               organization_id: this.ActionObj.organization_id,
@@ -536,7 +535,7 @@ export default {
             },
           },
         });
-        var StoreArray = JSON.parse(result.data.ListUsers);
+        var StoreArray = JSON.parse(result.data.ListOrganizationUsers);
         this.UserList = StoreArray.data.Items;
         this.UserList.unshift("ALL");
         if (this.UserList.length == 0) {

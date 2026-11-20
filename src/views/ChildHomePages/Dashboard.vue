@@ -191,14 +191,22 @@
       <v-row>
         <v-col cols="12" xs="12" sm="12" md="12">
           <v-card flat class="pw-card pa-3">
+            <div v-if="reportLoading" class="pa-6">
+              <v-skeleton-loader type="image" height="240" />
+            </div>
+            <div v-else-if="!sortedReports.length" class="dash-empty">
+              <v-icon size="36" class="mb-2">mdi-chart-bar</v-icon>
+              <div class="dash-empty__title">No usage data for this range</div>
+              <div class="pw-muted">
+                {{ ReportMessage || "Pick another organization or date range." }}
+              </div>
+            </div>
             <apexchart
-              v-if="mounted"
+              v-else
               height="270px"
               type="bar"
               :options="ComputedChartOptions"
-              :series="
-                SelectType === 'TOTAL_VISIT' ? ChartSeries : ChartOtherSeries
-              "
+              :series="chartSeries"
             />
           </v-card>
         </v-col>
@@ -217,6 +225,7 @@ import {
   ListOrganizations,
 } from "@/graphql/queries.js";
 import { GetOrgReports } from "@/mixins/GetOrgDetailReport.js";
+import { activeOrgsSorted, pickDefaultOrg, rememberOrg } from "@/utils/orgDefaults.js";
 import VueApexCharts from "vue3-apexcharts";
 
 import { generateClient } from "aws-amplify/api";
@@ -268,7 +277,7 @@ export default {
         value: "AVERAGE_VISITS",
       },
     ],
-    organization_name: "4fc95aed-392c-455f-86ac-b9a0882d8666",
+    organization_name: "",
     filterarray: [],
     date: new Date().toISOString().substr(0, 10),
     todate: new Date().toISOString().substr(0, 10),
@@ -376,69 +385,40 @@ export default {
     moment: "",
   }),
   computed: {
-    ComputedChartOptions() {
-      const ChartOptions = {
-        colors:
-          this.SelectType == "TOTAL_VISIT"
-            ? ["#4db6ac"]
-            : this.SelectType == "ACTIVE_USERS"
-            ? ["#607d8b"]
-            : ["#4db6ac"],
-        chart: {
-          type: "bar",
-          height: 350,
-          toolbar: {
-            show: false,
-          },
-        },
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            columnWidth: "55%",
-            endingShape: "rounded",
-          },
-        },
-        legend: {
-          position: "top",
-        },
-        dataLabels: {
-          enabled: false,
-        },
-        stroke: {
-          show: true,
-          width: 1,
-          colors: ["#fff"],
-        },
-        xaxis: {
-          categories: [],
-        },
-
-        fill: {
-          opacity: 1,
-        },
-        tooltip: {
-          y: {
-            formatter: function (val) {
-              return val;
-            },
-          },
-        },
-      };
-      ChartOptions.xaxis.categories = [];
-      this.ChartSeries[0].data = [];
-      // this.ChartSeries[1].data = [];
-      // this.ChartSeries[2].data = [];
-      for (let i = 0; i < this.OverAllResult.length; i++) {
-        ChartOptions.xaxis.categories.push(this.OverAllResult[i].current_day);
-        this.ChartSeries[0].data.push(this.OverAllResult[i].total_visits);
-        // this.ChartSeries[1].data.push(this.OverAllResult[i].povs_met);
-        // this.ChartSeries[2].data.push(this.OverAllResult[i].total_e_details);
+    sortedReports() {
+      return (this.OverAllResult || [])
+        .slice()
+        .sort((a, b) => Number(a.created_on) - Number(b.created_on));
+    },
+    chartSeries() {
+      const r = this.sortedReports;
+      if (this.SelectType === "ACTIVE_USERS") {
+        return [{ name: "Active Users", data: r.map((x) => x.total_users || 0) }];
       }
-      this.mounted = false;
-      setTimeout(() => {
-        this.mounted = true;
-      }, 200);
-      return ChartOptions;
+      if (this.SelectType === "AVERAGE_VISITS") {
+        return [
+          {
+            name: "Average Visits",
+            data: r.map((x) =>
+              x.total_users ? Number((x.total_visits / x.total_users).toFixed(2)) : 0,
+            ),
+          },
+        ];
+      }
+      return [{ name: "Total Visits", data: r.map((x) => x.total_visits || 0) }];
+    },
+    ComputedChartOptions() {
+      return {
+        colors: [this.SelectType == "ACTIVE_USERS" ? "#607d8b" : "#4db6ac"],
+        chart: { type: "bar", height: 350, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: false, columnWidth: "55%" } },
+        legend: { position: "top" },
+        dataLabels: { enabled: false },
+        stroke: { show: true, width: 1, colors: ["#fff"] },
+        xaxis: { categories: this.sortedReports.map((x) => x.current_day) },
+        fill: { opacity: 1 },
+        tooltip: { y: { formatter: (val) => val } },
+      };
     },
     displayToDate() {
       let currentDate = new Date(this.to_date);
@@ -449,15 +429,6 @@ export default {
     },
   },
   mounted() {
-    setTimeout(() => {
-      // this.GetOrgDashboardDetailsmethod();
-      this.GetOrgReportsMethods(
-        new Date(this.from_date).getTime(),
-        new Date(this.to_date).getTime() + 24 * 60 * 60 * 1000,
-        this.$store.getters.get_current_user_details.user_id,
-        this.organization_name,
-      );
-    }, 1000);
     // console.log("rad  ", this.radios);
     // var new_to_date = new Date(this.todate).getTime();
     // var n_from_date = new Date(this.todate).getTime() / 1000;
@@ -472,6 +443,7 @@ export default {
   },
   watch: {
     from_date() {
+      if (!this.organization_name) return;
       this.GetOrgReportsMethods(
         new Date(this.from_date).getTime(),
         new Date(this.to_date).getTime() + 24 * 60 * 60 * 1000,
@@ -480,6 +452,7 @@ export default {
       );
     },
     organization_name(val) {
+      rememberOrg(val);
       if (val != "") {
         this.GetOrgReportsMethods(
           new Date(this.from_date).getTime(),
@@ -488,29 +461,6 @@ export default {
           val,
         );
       }
-    },
-    SelectType(val) {
-      this.ChartOtherSeries[0].data = [];
-      if (val === "ACTIVE_USERS") {
-        for (let i = 0; i < this.OverAllResult.length; i++) {
-          this.ChartOtherSeries[0].name = "Active Users";
-          this.ChartOtherSeries[0].data.push(this.OverAllResult[i].total_users);
-        }
-      } else if (val === "AVERAGE_VISITS") {
-        for (let i = 0; i < this.OverAllResult.length; i++) {
-          this.ChartOtherSeries[0].name = "Average Visits";
-          this.ChartOtherSeries[0].data.push(
-            (
-              this.OverAllResult[i].total_visits /
-              this.OverAllResult[i].total_users
-            ).toFixed(2),
-          );
-        }
-      }
-      this.mounted = false;
-      setTimeout(() => {
-        this.mounted = true;
-      }, 200);
     },
     // radios(val) {
     //   console.log("val", val);
@@ -784,9 +734,8 @@ export default {
         this.OrganizationList = StoreArray.data.Items;
         console.log("orgggggg", this.OrganizationList);
         this.filterarray = [];
-        this.filterarray = this.OrganizationList.filter(
-          (org) => org.organization_status == "ACTIVE",
-        );
+        this.filterarray = activeOrgsSorted(this.OrganizationList);
+        this.organization_name = pickDefaultOrg(this.filterarray, this.organization_name);
         if (this.filterarray.length == 0) {
           this.NoData = "No Organization Found";
         }
@@ -816,6 +765,17 @@ export default {
 </script>
 
 <style>
+.dash-empty {
+  text-align: center;
+  padding: 64px 16px;
+  color: var(--pw-muted);
+}
+.dash-empty__title {
+  font-weight: 600;
+  font-size: 15px;
+  color: rgb(var(--v-theme-on-surface));
+  margin-bottom: 4px;
+}
 .overflow {
   overflow: hidden;
   text-overflow: ellipsis;

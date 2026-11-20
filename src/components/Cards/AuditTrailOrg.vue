@@ -97,16 +97,25 @@
             </v-col>
             <v-col cols="8">
               <v-card flat variant="outlined" class="pa-3">
-                <apexchart
-                  v-if="mounted"
-                  height="240px"
-                  type="bar"
-                  :options="ComputedChartOptions"
-                  :series="ChartSeries"
-                />
-                <div align="center" class="mt-n4 font-weight-bold">
-                  Total Visits
+                <div v-if="reportLoading" class="pa-4">
+                  <v-skeleton-loader type="image" height="220" />
                 </div>
+                <div v-else-if="!OverAllResult.length" class="org-chart-empty">
+                  <v-icon size="32" class="mb-2">mdi-chart-bar</v-icon>
+                  <div class="org-chart-empty__title">No visits in the 30 days before the selected date</div>
+                  <div class="pw-muted">{{ ReportMessage || "Pick another date to see earlier activity." }}</div>
+                </div>
+                <template v-else>
+                  <apexchart
+                    height="240px"
+                    type="bar"
+                    :options="ComputedChartOptions"
+                    :series="orgChartSeries"
+                  />
+                  <div align="center" class="mt-n4 font-weight-bold">
+                    Total Visits
+                  </div>
+                </template>
               </v-card>
             </v-col>
             <v-col cols="12" md="12">
@@ -1185,8 +1194,8 @@
                   <template v-slot:activator="{ props }">
                     <div class="FontSize" v-bind="props">
                       {{
-                        item.territory_name.length >= 8
-                          ? item.territory_name.substr(0, 8) + "..."
+                        item.territory_name.length > 28
+                          ? item.territory_name.substr(0, 28) + "..."
                           : item.territory_name
                       }}
                     </div>
@@ -1203,8 +1212,8 @@
                       v-bind="props"
                     >
                       {{
-                        item.territory_description.length >= 8
-                          ? item.territory_description.substr(0, 8) + "..."
+                        item.territory_description.length > 40
+                          ? item.territory_description.substr(0, 40) + "..."
                           : item.territory_description
                       }}
                     </div>
@@ -1916,6 +1925,14 @@ export default {
             .replaceAll("/", "-")
         : "";
     },
+    sortedOrgReports() {
+      return (this.OverAllResult || [])
+        .slice()
+        .sort((x, y) => Number(x.created_on) - Number(y.created_on));
+    },
+    orgChartSeries() {
+      return [{ name: "Total Visits", data: this.sortedOrgReports.map((x) => x.total_visits || 0) }];
+    },
     ComputedChartOptions() {
       const ChartOptions = {
         colors: ["#607d8b"],
@@ -1959,16 +1976,7 @@ export default {
           },
         },
       };
-      ChartOptions.xaxis.categories = [];
-      this.ChartSeries[0].data = [];
-      for (let i = 0; i < this.OverAllResult.length; i++) {
-        ChartOptions.xaxis.categories.push(this.OverAllResult[i].current_day);
-        this.ChartSeries[0].data.push(this.OverAllResult[i].total_visits);
-      }
-      this.mounted = false;
-      setTimeout(() => {
-        this.mounted = true;
-      }, 200);
+      ChartOptions.xaxis.categories = this.sortedOrgReports.map((x) => x.current_day);
       return ChartOptions;
     },
   },
@@ -2122,7 +2130,7 @@ export default {
 
       this.GetOrgReportsMethods(
         this.fromdatess,
-        new Date(this.Orgdate).getTime() + 24 * 60 * 60,
+        new Date(this.Orgdate).getTime() + 24 * 60 * 60 * 1000,
         this.$store.getters.get_current_user_details.user_id,
         this.StoreObj.organization_id,
       );
@@ -2583,4 +2591,14 @@ export default {
     },
   },
 };
-</script>
+</script>.org-chart-empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--pw-muted);
+}
+.org-chart-empty__title {
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+  margin-bottom: 4px;
+}
+
