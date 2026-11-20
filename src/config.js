@@ -11,7 +11,8 @@
 //   "userPoolId": "ap-south-1_xxxx",
 //   "userPoolClientId": "xxxx",
 //   "graphqlEndpoint": "https://xxxx.appsync-api.ap-south-1.amazonaws.com/graphql",
-//   "esperConsoleUrl": "https://xxxx.esper.cloud"   (optional)
+//   "esperConsoleUrl": "https://xxxx.esper.cloud",   (optional)
+//   "features": { "supportCases": true, "latLng": true }   (optional; missing = on)
 // }
 
 const REQUIRED = ["region", "userPoolId", "userPoolClientId", "graphqlEndpoint"];
@@ -55,4 +56,14 @@ export async function loadConfig() {
 export function getConfig() {
   if (!config) throw new Error("Config not loaded yet");
   return config;
+}
+
+/**
+ * Per-environment feature switch from config.json "features". A feature
+ * that isn't listed is on, so DEV and local dev keep everything; an
+ * environment turns one off with { "features": { "<name>": false } }.
+ */
+export function featureOn(name) {
+  const f = config && config.features;
+  return !f || f[name] !== false;
 }

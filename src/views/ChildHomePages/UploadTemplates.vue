@@ -36,7 +36,7 @@
         <span>Download Template</span>
       </v-tooltip>
     </v-toolbar>
-    <v-row class="mt-2">
+    <v-row v-if="latLngOn" class="mt-2">
       <v-col cols="5">
         <v-file-input
           v-model="excelFile"
@@ -128,10 +128,15 @@ import axios from "axios";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import DownloadExcelTemplateDialog from "@/components/Templates/DownloadExcelTemplate.vue";
+import { featureOn } from "@/config";
 
 export default {
   components: {
     DownloadExcelTemplateDialog,
+  },
+  computed: {
+    // Off where the geocoder isn't allowed by the site's CSP (config.json "features").
+    latLngOn: () => featureOn("latLng"),
   },
   data: () => ({
     anIncreasingNumber: 1,

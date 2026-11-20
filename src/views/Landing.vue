@@ -136,7 +136,7 @@ import Overlay from "@/components/Overlay.vue";
 import AppNavDrawer from "@/components/AppShell/AppNavDrawer.vue";
 import { GetCurrentUser } from "@/mixins/GetCurrentUser.js";
 import {
-  NAV_ITEMS,
+  visibleNavItems,
   PAGE_DESCRIPTIONS,
   displayTitle,
   routeGroup,
@@ -154,7 +154,7 @@ export default {
     logoSrc: require("@/assets/PortalFinalLogo.png"),
     drawer: true,
     overlay: false,
-    navItems: NAV_ITEMS,
+    navItems: visibleNavItems(),
     GetCurrentUserDetailsObj: {},
   }),
   computed: {

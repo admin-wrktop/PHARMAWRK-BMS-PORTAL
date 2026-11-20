@@ -3,7 +3,9 @@
  * and page descriptions. Route names must match src/router/index.js.
  */
 
-const I = (text, icon, link) => ({ type: "item", text, icon, link });
+import { featureOn } from "@/config";
+
+const I = (text, icon, link, feature) => ({ type: "item", text, icon, link, feature });
 const H = (text) => ({ type: "header", text, key: `h:${text}` });
 
 export const NAV_ITEMS = [
@@ -21,7 +23,7 @@ export const NAV_ITEMS = [
   I("Audit Log", "mdi-text-box-search-outline", "Audit Log"),
 
   H("Support"),
-  I("Support Cases", "mdi-lifebuoy", "Support Cases"),
+  I("Support Cases", "mdi-lifebuoy", "Support Cases", "supportCases"),
 
   H("Administration"),
   I("BMS Users", "mdi-account-key-outline", "BMS Users"),
@@ -56,4 +58,10 @@ export function routeGroup(routeName) {
     else if (e.link === routeName) return group;
   }
   return null;
+}
+
+/** NAV_ITEMS without items whose feature is off in this environment, and without empty headers. */
+export function visibleNavItems() {
+  const items = NAV_ITEMS.filter((e) => e.type !== "item" || !e.feature || featureOn(e.feature));
+  return items.filter((e, i) => e.type !== "header" || (items[i + 1] && items[i + 1].type === "item"));
 }

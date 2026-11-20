@@ -10,6 +10,8 @@ name: Deploy BMS
 #       PROD gets exactly what DEV has.
 #
 # config.json values are public identifiers that ship to the browser anyway.
+# "features" switches screens per environment without changing the build:
+# turn a feature on for PROD here once its backend is live there.
 
 on:
   push:
@@ -69,7 +71,8 @@ jobs:
         "userPoolId":"ap-south-1_lc4CPMAp0",
         "userPoolClientId":"7s4shkr6lsjs90fnba8mree4i4",
         "graphqlEndpoint":"https://tu3vgr25zrf6bagaax6t35a56a.appsync-api.ap-south-1.amazonaws.com/graphql",
-        "esperConsoleUrl":"${{ vars.VUE_APP_ESPER_CONSOLE_URL }}"}
+        "esperConsoleUrl":"${{ vars.VUE_APP_ESPER_CONSOLE_URL }}",
+        "features":{"supportCases":true,"latLng":true}}
 
   pick-prod-build:
     name: Pick build for PROD
@@ -111,4 +114,5 @@ jobs:
         "userPoolId":"ap-south-1_Y9VTK43qS",
         "userPoolClientId":"2c2p7f8lscn8qngo80vuq8b7ip",
         "graphqlEndpoint":"https://uqslozlpuvgv5eu2fjks7n7xce.appsync-api.ap-south-1.amazonaws.com/graphql",
-        "esperConsoleUrl":"${{ vars.VUE_APP_ESPER_CONSOLE_URL }}"}
+        "esperConsoleUrl":"${{ vars.VUE_APP_ESPER_CONSOLE_URL }}",
+        "features":{"supportCases":false,"latLng":false}}

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Login from "../views/Login.vue";
 import { fetchAuthSession } from "aws-amplify/auth";
+import { featureOn } from "@/config";
 
 const routes = [
   {
@@ -93,6 +94,7 @@ const routes = [
       {
         name: "Support Cases",
         path: "/SupportCases",
+        meta: { feature: "supportCases" },
         component: () =>
           import(
             /* webpackChunkName: "SupportCases" */ "../views/ChildHomePages/SupportCases.vue"
@@ -135,6 +137,8 @@ function isDevPreview(to) {
 // Every page except sign-in needs a Cognito session. Signed-out users are
 // sent to sign-in and returned to the page they asked for afterwards.
 router.beforeEach(async (to) => {
+  // Screens switched off for this environment (config.json "features").
+  if (to.meta && to.meta.feature && !featureOn(to.meta.feature)) return { name: "Dashboard" };
   const isPublic = PUBLIC_ROUTES.includes(to.name);
   const preview = isDevPreview(to);
   if (!isPublic && preview) return true;
