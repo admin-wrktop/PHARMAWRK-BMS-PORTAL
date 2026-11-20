@@ -74,6 +74,14 @@ const routes = [
             /* webpackChunkName: "MasterPOVList" */ "../views/ChildHomePages/UploadTemplates.vue"
           ),
       },
+      {
+        name: "Support Cases",
+        path: "/SupportCases",
+        component: () =>
+          import(
+            /* webpackChunkName: "SupportCases" */ "../views/ChildHomePages/SupportCases.vue"
+          ),
+      },
     ],
   },
   { path: "/:pathMatch(.*)*", redirect: { name: "Dashboard" } },

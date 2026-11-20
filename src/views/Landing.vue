@@ -145,7 +145,7 @@ import { signOut } from "aws-amplify/auth";
 
 const THEME_KEY = "pharmawrk.theme";
 // Pages that render their own cards (dashboards) — no page surface around them.
-const BARE_ROUTES = ["Dashboard"];
+const BARE_ROUTES = ["Dashboard", "Support Cases"];
 
 export default {
   mixins: [GetCurrentUser],

@@ -18,6 +18,9 @@ export const NAV_ITEMS = [
   H("Activity"),
   I("Visit Log", "mdi-map-marker-outline", "Visit Log"),
   I("Audit Log", "mdi-text-box-search-outline", "Audit Log"),
+
+  H("Support"),
+  I("Support Cases", "mdi-lifebuoy", "Support Cases"),
 ];
 
 export const PAGE_DESCRIPTIONS = {
@@ -29,6 +32,8 @@ export const PAGE_DESCRIPTIONS = {
   "Visit Log": "Field visits logged by reps, by organization and date.",
   "Audit Log": "Who changed what, and when.",
   Notification: "Notification settings and messages sent to users.",
+  "Support Cases":
+    "Issues reported by Portal and Mobile users. Reply, add internal notes and track each case to resolution.",
 };
 
 export function displayTitle(routeName) {

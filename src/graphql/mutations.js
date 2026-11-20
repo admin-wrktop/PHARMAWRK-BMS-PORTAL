@@ -97,3 +97,8 @@ export const SendNotificationsToUsers = /* GraphQL */ `
     SendNotificationsToUsers(input: $input)
   }
 `;
+export const SupportCases = /* GraphQL */ `
+  mutation SupportCases($command: String!, $payload: AWSJSON) {
+    SupportCases(command: $command, payload: $payload)
+  }
+`;
