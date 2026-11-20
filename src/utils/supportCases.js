@@ -28,7 +28,13 @@ export const CASE_TYPES = {
 export const APP_AREAS = {
   PORTAL: { label: "Portal", icon: "mdi-monitor" },
   MOBILE: { label: "Mobile app", icon: "mdi-cellphone" },
+  BMS: { label: "BMS", icon: "mdi-shield-account-outline" },
 };
+
+/** Staff-raised platform-level case (no customer organisation). */
+export function isPlatformCase(t) {
+  return !!t && (!t.organization_id || t.organization_id === "PLATFORM" || t.is_platform === true);
+}
 
 export const toItems = (map) =>
   Object.entries(map).map(([value, v]) => ({ value, title: v.label }));

@@ -43,13 +43,18 @@ export async function supportCall(command, payload = {}) {
  * Upload files through presigned PUT URLs and return the attachment refs the
  * reply command expects: [{ key, name, is_screenshot }].
  */
-export async function uploadSupportAttachments(ticketId, files, onProgress) {
+/**
+ * target: a ticket_id string (reply on an existing case), or an object such as
+ * { organization_id } / {} for a case that doesn't exist yet.
+ */
+export async function uploadSupportAttachments(target, files, onProgress) {
+  const where = typeof target === "string" ? { ticket_id: target } : target || {};
   const refs = [];
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const contentType = file.type || "application/octet-stream";
     const res = await supportCall("bmsGetSupportUploadUrl", {
-      ticket_id: ticketId,
+      ...where,
       file_name: file.name,
       content_type: contentType,
       file_size: file.size,
@@ -63,6 +68,11 @@ export async function uploadSupportAttachments(ticketId, files, onProgress) {
     refs.push({ key: res.key, name: file.name, is_screenshot: false });
   }
   return refs;
+}
+
+/** Staff-raised case. organization_id omitted = platform-level internal case. */
+export async function createStaffCase(input) {
+  return supportCall("bmsCreateSupportCase", input);
 }
 
 export const SupportCasesApi = {

@@ -1,6 +1,7 @@
 <template>
   <div class="sc-page">
     <SupportSettingsDialog v-model="settingsOpen" />
+    <RaiseCaseDialog v-model="raiseOpen" :orgs="orgItems" @created="onRaised" />
 
     <!-- Per-status counts (click to filter) -->
     <div class="sc-counts">
@@ -74,6 +75,14 @@
             :loading="loading"
             @click="loadCases()"
             >Refresh</v-btn
+          >
+          <v-btn
+            variant="flat"
+            size="small"
+            color="primary"
+            prepend-icon="mdi-plus"
+            @click="raiseOpen = true"
+            >Raise case</v-btn
           >
         </div>
       </div>
@@ -164,6 +173,7 @@ import { ListOrganizations, ListBMSUsers } from "@/graphql/queries.js";
 import StatusChip from "@/components/ui/StatusChip.vue";
 import SupportCaseDetail from "@/components/SupportCases/SupportCaseDetail.vue";
 import SupportSettingsDialog from "@/components/SupportCases/SupportSettingsDialog.vue";
+import RaiseCaseDialog from "@/components/SupportCases/RaiseCaseDialog.vue";
 import { supportCall } from "@/mixins/SupportCases/SupportCasesApi.js";
 import {
   SUPPORT_STATUS,
@@ -180,7 +190,7 @@ const PAGE_SIZE = 100;
 
 export default {
   name: "SupportCases",
-  components: { StatusChip, SupportCaseDetail, SupportSettingsDialog },
+  components: { StatusChip, SupportCaseDetail, SupportSettingsDialog, RaiseCaseDialog },
   data: () => ({
     cases: [],
     counts: {},
@@ -197,6 +207,7 @@ export default {
     staff: [],
     selectedId: null,
     settingsOpen: false,
+    raiseOpen: false,
     now: Date.now(),
     listSeq: 0,
     timer: null,
@@ -351,6 +362,12 @@ export default {
       const q = { ...this.$route.query };
       delete q.case;
       this.$router.replace({ query: q });
+    },
+    async onRaised(ticket) {
+      // Show the new case: back to "All open", reload, open it.
+      if (this.statusFilter !== "OPEN_ONLY") this.statusFilter = "OPEN_ONLY";
+      await this.loadCases();
+      if (ticket && ticket.ticket_id) this.openCase(ticket.ticket_id);
     },
     onCaseUpdated(ticket) {
       if (!ticket) return;

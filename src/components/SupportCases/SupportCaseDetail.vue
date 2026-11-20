@@ -93,12 +93,26 @@
             @drop.prevent="onDrop"
           >
             <div class="scd-composer__top">
-              <v-btn-toggle v-model="internal" mandatory density="compact" variant="outlined" divided color="primary">
+              <v-btn-toggle
+                v-if="!platform"
+                v-model="internal"
+                mandatory
+                density="compact"
+                variant="outlined"
+                divided
+                color="primary"
+              >
                 <v-btn :value="false" size="small" prepend-icon="mdi-reply-outline">Public reply</v-btn>
                 <v-btn :value="true" size="small" prepend-icon="mdi-lock-outline">Internal note</v-btn>
               </v-btn-toggle>
               <span class="pw-muted scd-composer__hint">
-                {{ internal ? "Only BMS staff can see this note." : "The customer is emailed this reply." }}
+                {{
+                  platform
+                    ? "Platform case: notes are visible to BMS staff only."
+                    : internal
+                    ? "Only BMS staff can see this note."
+                    : "The customer is emailed this reply."
+                }}
               </span>
             </div>
             <v-textarea
@@ -232,6 +246,7 @@ import {
   formatBytes,
   formatDateTime,
   toItems,
+  isPlatformCase,
 } from "@/utils/supportCases.js";
 
 const EDITABLE = ["case_status", "severity", "case_type", "app_area", "assigned_to", "awaiting_release"];
@@ -265,6 +280,9 @@ export default {
     accept: ACCEPT_ATTR,
   }),
   computed: {
+    platform() {
+      return isPlatformCase(this.ticket);
+    },
     statusItems: () => STATUS_ORDER.map((s) => ({ value: s, title: SUPPORT_STATUS[s].label })),
     severityItems: () => SEVERITY_ORDER.map((s) => ({ value: s, title: SUPPORT_SEVERITY[s].label })),
     typeItems: () => toItems(CASE_TYPES),
@@ -332,6 +350,7 @@ export default {
     },
     setTicket(t) {
       this.ticket = t;
+      if (isPlatformCase(t)) this.internal = true;
       this.form = { ...this.original };
     },
     async load() {

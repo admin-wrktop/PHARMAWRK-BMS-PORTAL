@@ -134,6 +134,24 @@ export function supportMock(command, p) {
       messages[t.ticket_id].push({ message_id: `${t.updated_on}#s`, created_on: t.updated_on, author_type: "SYSTEM", body: `Updated: ${changed.join(", ")}`, attachments: [] });
       return Promise.resolve({ status: "SUCCESS", ticket: { ...t } });
     }
+    case "bmsCreateSupportCase": {
+      const ts = Date.now();
+      const org = orgs.find((o) => o.id === p.organization_id);
+      const t = {
+        ticket_id: `t-${tickets.length + 1}`,
+        case_number: `PW-${100001 + tickets.length}`,
+        organization_id: org ? org.id : "PLATFORM",
+        organization_name: org ? org.name : "Platform (internal)",
+        subject: p.subject, category: p.category || "General", severity: p.severity || "NORMAL",
+        case_status: "OPEN", case_type: p.case_type || "BUG", app_area: p.app_area, source_app: "BMS",
+        creator_name: "Preview Admin", creator_email: "preview.admin@example.com",
+        created_on: ts, updated_on: ts, last_reply_by: "STAFF", message_count: 1,
+      };
+      tickets.unshift(t);
+      messages[t.ticket_id] = [{ message_id: `${ts}#n`, created_on: ts, author_type: "STAFF", author_name: "Preview Admin", body: p.description,
+        attachments: (p.attachments || []).map((a) => ({ ...a, size: 1000, content_type: "application/octet-stream" })) }];
+      return Promise.resolve({ status: "SUCCESS", ticket: { ...t } });
+    }
     case "bmsGetSupportUploadUrl":
       return Promise.resolve({ mock: true, upload_url: "", key: `support-cases/mock/${p.file_name}`, content_type: p.content_type });
     case "bmsGetSupportSettings":
