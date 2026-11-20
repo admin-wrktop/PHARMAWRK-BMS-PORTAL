@@ -310,7 +310,7 @@ export default {
         ["Timezone", c.timezone],
         ["Phone", t.creator_phone],
         ["Last updated", formatDateTime(t.updated_on)],
-        ["Resolved on", formatDateTime(t.resolved_on)],
+        ["Resolved on", t.case_status === "RESOLVED" ? formatDateTime(t.resolved_on) : ""],
       ];
       return rows.filter((r) => r[1]);
     },
@@ -392,6 +392,7 @@ export default {
         if (!this.internal) payload.new_status = this.replyStatus;
         const res = await supportCall("bmsReplySupportCase", payload);
         this.body = "";
+        this.replyStatus = "PENDING_CUSTOMER";
         this.files = [];
         this.fileErrors = [];
         this.toast(this.internal ? "Internal note added" : "Reply sent");

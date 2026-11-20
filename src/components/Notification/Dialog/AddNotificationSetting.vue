@@ -177,7 +177,6 @@ export default {
       }
     },
     async CreateNotification() {
-      console.log("sdnuicjsdkbds", this.GetCurrentUserDetailsObj.user_id);
       try {
         this.loading = true;
         var inputparams = {

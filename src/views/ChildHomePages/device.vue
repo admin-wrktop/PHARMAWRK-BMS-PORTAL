@@ -107,9 +107,9 @@
             <v-tooltip color="primary" activator="parent" location="bottom">
               <template v-slot:activator="{ props }">
                 <span class="FontSize" v-bind="props">{{
-                  item.esper_device_id.length > 8
-                    ? `${item.esper_device_id.slice(0, 8)}...`
-                    : item.esper_device_id
+                  (item.esper_device_id || "").length > 18
+                    ? `${item.esper_device_id.slice(0, 18)}...`
+                    : item.esper_device_id || "–"
                 }}</span>
               </template>
               <span v-text="item.esper_device_id"></span>
@@ -119,9 +119,9 @@
             <v-tooltip color="primary" activator="parent" location="bottom">
               <template v-slot:activator="{ props }">
                 <span class="FontSize" v-bind="props">{{
-                  item.device_holder_name.length > 8
-                    ? `${item.device_holder_name.slice(0, 8)}...`
-                    : item.device_holder_name
+                  (item.device_holder_name || "").length > 18
+                    ? `${item.device_holder_name.slice(0, 18)}...`
+                    : item.device_holder_name || "–"
                 }}</span>
               </template>
               <span v-text="item.device_holder_name"></span>
@@ -131,9 +131,9 @@
             <v-tooltip color="primary" activator="parent" location="bottom">
               <template v-slot:activator="{ props }">
                 <span class="FontSize" v-bind="props">{{
-                  item.employee_id.length > 8
-                    ? `${item.employee_id.slice(0, 8)}...`
-                    : item.employee_id
+                  (item.employee_id || "").length > 18
+                    ? `${item.employee_id.slice(0, 18)}...`
+                    : item.employee_id || "–"
                 }}</span>
               </template>
               <span v-text="item.employee_id"></span>
@@ -143,9 +143,9 @@
             <v-tooltip color="primary" activator="parent" location="bottom">
               <template v-slot:activator="{ props }">
                 <span class="FontSize" v-bind="props">{{
-                  item.device_model.length > 8
-                    ? `${item.device_model.slice(0, 8)}...`
-                    : item.device_model
+                  (item.device_model || "").length > 18
+                    ? `${item.device_model.slice(0, 18)}...`
+                    : item.device_model || "–"
                 }}</span>
               </template>
               <span v-text="item.device_model"></span>
@@ -155,9 +155,9 @@
             <v-tooltip color="primary" activator="parent" location="bottom">
               <template v-slot:activator="{ props }">
                 <span class="FontSize" v-bind="props">{{
-                  item.imei_number.length > 8
-                    ? `${item.imei_number.slice(0, 8)}...`
-                    : item.imei_number
+                  (item.imei_number || "").length > 18
+                    ? `${item.imei_number.slice(0, 18)}...`
+                    : item.imei_number || "–"
                 }}</span>
               </template>
               <span v-text="item.imei_number"></span>
@@ -167,9 +167,9 @@
             <v-tooltip color="primary" activator="parent" location="bottom">
               <template v-slot:activator="{ props }">
                 <span class="FontSize" v-bind="props">{{
-                  item.sim_card_number.length > 8
-                    ? `${item.sim_card_number.slice(0, 8)}...`
-                    : item.sim_card_number
+                  (item.sim_card_number || "").length > 18
+                    ? `${item.sim_card_number.slice(0, 18)}...`
+                    : item.sim_card_number || "–"
                 }}</span>
               </template>
               <span v-text="item.sim_card_number"></span>
@@ -218,7 +218,7 @@ export default {
   },
   data: () => ({
     page: 1,
-    NoData: "",
+    NoData: "No records found",
     StoreObj: {},
     pageCount: 0,
     search: null,
@@ -232,15 +232,15 @@ export default {
     device_status: "ALL",
     DeviceStatusItems: ["PENDING", "ONBOARDING", "DISPATCH", "ALL"],
     headers: [
-      { text: "Device Id", value: "esper_device_id" },
-      { text: "User Name", value: "user_name" },
-      { text: "Emp-Id", value: "employee_id" },
-      { text: "Device Model", value: "device_model" },
-      { text: "On-Boarded On", value: "on_boarded_on" },
-      { text: "IMEI No", value: "imei_number" },
-      { text: "Sim Card No", value: "sim_card_number" },
-      { text: "Device Status", value: "device_status" },
-      { text: "Actions", value: "Actions" },
+      { title: "Device Id", key: "esper_device_id" },
+      { title: "User Name", key: "user_name" },
+      { title: "Emp-Id", key: "employee_id" },
+      { title: "Device Model", key: "device_model" },
+      { title: "On-Boarded On", key: "on_boarded_on" },
+      { title: "IMEI No", key: "imei_number" },
+      { title: "Sim Card No", key: "sim_card_number" },
+      { title: "Device Status", key: "device_status" },
+      { title: "Actions", key: "Actions" },
     ],
   }),
   watch: {

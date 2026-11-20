@@ -229,10 +229,17 @@ export default {
       }
     },
     "create_edit_div.organization"(val) {
-      this.org_id = val.organization_id;
-      this.getOrgLists(this.org_id);
+      if (!val) return; // form reset
+      // Edit mode starts with the organisation's name; look up the object.
+      const org =
+        typeof val === "object"
+          ? val
+          : (this.filterarray || []).find((o) => o.organization_name === val);
+      this.org_id = org ? org.organization_id : undefined;
+      if (this.org_id) this.getOrgLists(this.org_id);
     },
     "create_edit_div.user_name"(val) {
+      if (!val || typeof val !== "object") return; // reset, or edit-mode id
       if (this.StoreObj.Action == "CREATE") {
         this.emp_id = val.user_employee_id;
         this.create_edit_div.employee_id = this.emp_id;
@@ -320,7 +327,7 @@ export default {
         this.loading = false;
         var ResultObject = JSON.parse(result.data.CreateDevice);
         console.log("devicelist", ResultObject);
-        if (ResultObject.status == "Success") {
+        if (String(ResultObject.status).toUpperCase() == "SUCCESS") {
           this.$refs.form.reset();
           this.SnackBarComponent = {
             SnackbarVmodel: true,
@@ -447,7 +454,7 @@ export default {
             input: { organization_id: org_id },
           },
         });
-        var StoreArray = JSON.parse(result.data.ListOrganizationUser);
+        var StoreArray = JSON.parse(result.data.ListOrganizationUsers);
         this.user_List = StoreArray.data.Items;
         console.log("user_List", this.user_List);
         this.userList_filter = [];
@@ -455,13 +462,15 @@ export default {
           (org) => org.user_status == "ACTIVE",
         );
 
-        if (this.user_List.length == 0) {
-          this.NoData = "No Organization Found";
+        if (this.userList_filter.length == 0) {
+          this.NoData = "No users in this organisation";
         }
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.userList_filter = [];
+        this.NoData =
+          (error && error.errors && error.errors[0] && error.errors[0].message) || "Could not load users";
       }
     },
     CreateEditSpecEmit(Toggle) {

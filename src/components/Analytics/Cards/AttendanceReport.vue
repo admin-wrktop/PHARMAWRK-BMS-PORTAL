@@ -105,7 +105,6 @@
                   <v-btn
                     text
                     color="primary"
-                    v-on:click="getAttendenceFilter()"
                     @click.stop="confirmDate()"
                   >
                     OK
@@ -182,6 +181,7 @@
         <v-col cols="12" sm="12" md="12" xs="12" class="mt-2">
           <!-- <Overlay :overlay="overlay" /> -->
           <v-data-table
+            :no-data-text="NoData"
             density="compact"
             :search="search"
             :headers="headers"
@@ -454,6 +454,7 @@
 </template>
 
 <script>
+import { dayStartMs, dayEndMs } from "@/utils/dates.js";
 import Overlay from "@/components/Overlay.vue";
 import { DownloadExcel } from "@/mixins/Extras/DownloadExcel.js";
 // import ViewDetails from "@/components/Attendence/Dialogs/ViewDetails.vue";
@@ -483,6 +484,7 @@ export default {
   mixins: [GetOrgUsers, GetOrgDesignations, DownloadExcel],
   data() {
     return {
+      NoData: "No data available",
       loading: false,
       next_token: null,
       page: 1,
@@ -596,22 +598,8 @@ export default {
         this.next_token != null &&
         this.next_token != ""
       ) {
-        var toDatetimestamp = new Date(
-          this.ToDate.split("-")[0],
-          this.ToDate.split("-")[1] - 1,
-          this.ToDate.split("-")[2],
-          23,
-          59,
-          59,
-        ).getTime();
-        var fromDatetimestamp = new Date(
-          this.FromDate.split("-")[0],
-          this.FromDate.split("-")[1] - 1,
-          this.FromDate.split("-")[2],
-          0,
-          0,
-          59,
-        ).getTime();
+        var toDatetimestamp = dayEndMs(this.ToDateValue);
+        var fromDatetimestamp = dayStartMs(this.FromDateValue);
 
         this.getAttendence(
           fromDatetimestamp,
@@ -643,8 +631,8 @@ export default {
       // ).getTime();
       this.AttendenceList = [];
       this.getAttendence(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
         this.designation,
         this.employe,
         this.AttendenceFilter,
@@ -671,8 +659,8 @@ export default {
       // ).getTime();
       this.AttendenceList = [];
       this.getAttendence(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
         this.designation,
         this.employe,
         this.AttendenceFilter,
@@ -699,8 +687,8 @@ export default {
       // ).getTime();
       this.AttendenceList = [];
       this.getAttendence(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
         this.designation,
         this.employe,
         this.AttendenceFilter,
@@ -741,8 +729,8 @@ export default {
     // ).getTime();
     // setTimeout(() => {
     this.getAttendence(
-      new Date(this.FromDateValue).getTime(),
-      new Date(this.ToDateValue).getTime(),
+      dayStartMs(this.FromDateValue),
+      dayEndMs(this.ToDateValue),
       this.designation,
       this.employe,
       this.AttendenceFilter,
@@ -766,6 +754,8 @@ export default {
         this.FromDateValue = this.formatDate(this.FromDate);
         this.menuFromDate = false;
       }
+      // Reload with the dates just picked (either OK button).
+      this.getAttendenceFilter();
     },
     formatDate(date) {
       const d = new Date(date);
@@ -794,8 +784,8 @@ export default {
       // ).getTime();
       this.AttendenceList = [];
       this.getAttendence(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
         this.designation,
         this.employe,
         this.AttendenceFilter,
@@ -987,6 +977,8 @@ export default {
         console.log("error", error);
         this.EmployeeNames = [];
         this.AttendenceList = [];
+        this.NoData =
+          (error && error.errors && error.errors[0] && error.errors[0].message) || "No data available";
         this.loading = false;
         this.overlay = false;
       }
@@ -1039,22 +1031,8 @@ export default {
           .substr(0, 10);
         this.getDesignationLists();
         // this.getUsersLists();
-        var toDatetimestamp = new Date(
-          this.ToDate.split("-")[0],
-          this.ToDate.split("-")[1] - 1,
-          this.ToDate.split("-")[2],
-          23,
-          59,
-          59,
-        ).getTime();
-        var fromDatetimestamp = new Date(
-          this.FromDate.split("-")[0],
-          this.FromDate.split("-")[1] - 1,
-          this.FromDate.split("-")[2],
-          0,
-          0,
-          59,
-        ).getTime();
+        var toDatetimestamp = dayEndMs(this.ToDateValue);
+        var fromDatetimestamp = dayStartMs(this.FromDateValue);
         setTimeout(() => {
           this.getAttendence(
             fromDatetimestamp,

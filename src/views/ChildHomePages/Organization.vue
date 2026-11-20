@@ -250,7 +250,7 @@ export default {
     selected: [],
     current_view: "LIST",
     page: 1,
-    NoData: "",
+    NoData: "No Organization Found",
 
     StoreObj: {},
     SnackbarComponent: {},

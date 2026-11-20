@@ -99,7 +99,6 @@
                     text
                     color="primary"
                     @click="confirmDate()"
-                    v-on:click="getDate()"
                   >
                     OK
                   </v-btn>
@@ -647,6 +646,7 @@
 </template>
 
 <script>
+import { dayStartMs, dayEndMs } from "@/utils/dates.js";
 import { activeOrgsSorted, pickDefaultOrg, rememberOrg } from "@/utils/orgDefaults.js";
 import PovConversionDialog1 from "@/components/Report/PovConversionDialog1.vue";
 import PovConversion from "@/components/Report/PovConversion.vue";
@@ -696,7 +696,7 @@ export default {
     FromDate: new Date(),
     FromDateValue: new Date().toISOString().substr(0, 10),
     ToDateValue: new Date().toISOString().substr(0, 10),
-    NoData: "",
+    NoData: "No records found",
     search: "",
     filterVisitorList: [],
     overlay: false,
@@ -909,8 +909,8 @@ export default {
         this.next_token != ""
       ) {
         this.getvisitreport(
-          new Date(this.FromDateValue).getTime(),
-          new Date(this.ToDateValue).getTime(),
+          dayStartMs(this.FromDateValue),
+          dayEndMs(this.ToDateValue),
           this.designation,
           this.employe,
           this.povList,
@@ -929,6 +929,8 @@ export default {
         this.FromDateValue = this.formatDate(this.FromDate);
         this.menuFromDate = false;
       }
+      // Reload with the dates just picked (either OK button).
+      this.getMarkettingFilter1();
     },
     formatDate(date) {
       const d = new Date(date);
@@ -1014,8 +1016,8 @@ export default {
       // setTimeout(() => {
       this.filterVisitorList = [];
       this.getvisitreport(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
         this.designation,
         this.employe,
         this.povList,
@@ -1046,8 +1048,8 @@ export default {
       this.getDesignationLists();
       this.filterVisitorList = [];
       this.getvisitreport(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
         this.designation,
         this.employe,
         this.povList,

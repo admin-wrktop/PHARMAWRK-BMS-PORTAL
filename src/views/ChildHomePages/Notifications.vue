@@ -226,7 +226,7 @@ export default {
     create_edit_notification_dialog: false,
     setting_status: "ACTIVE",
     page: 1,
-    NoData: "",
+    NoData: "No records found",
     StatusItems: ["ACTIVE", "INACTIVE"],
     StoreObj: {
       Action: "DEFAULT",

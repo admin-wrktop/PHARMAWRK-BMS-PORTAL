@@ -516,7 +516,6 @@
                   label="Pov Type"
                   item-title="text"
                   item-value="value"
-                  @input="getOrgbyPOV(pov_type, status, next_token, 'SWITCH')"
                   :menu-props="{ contentClass: 'SelectFontSize' }"
                 >
                 </v-select>
@@ -527,7 +526,6 @@
                   variant="outlined"
                   density="compact"
                   label="Pov Status"
-                  @input="getOrgbyPOV(pov_type, status, next_token, 'SWITCH')"
                   :menu-props="{ contentClass: 'SelectFontSize' }"
                 >
                 </v-select>
@@ -1495,6 +1493,7 @@
   </div>
 </template>
 <script>
+import { dayStartMs, dayEndMs } from "@/utils/dates.js";
 import {
   ListOrganizationUsers,
   ListOrganizationsDailyReport,
@@ -1559,7 +1558,7 @@ export default {
     search: null,
     page: 1,
     pageVisit: 1,
-    NoData: "",
+    NoData: "No records found",
     userObj: {},
     visitObj: {},
     userDialog: false,
@@ -2050,24 +2049,16 @@ export default {
         this.getOrgbyUser(val, this.user_type);
       }
     },
+    pov_type() {
+      this.getOrgbyPOV(this.pov_type, this.status, null, "SWITCH");
+    },
+    status() {
+      this.getOrgbyPOV(this.pov_type, this.status, null, "SWITCH");
+    },
     pov_List(val) {
       if (val != "") {
-        var toDatetimestamp = new Date(
-          this.ToDate.split("-")[0],
-          this.ToDate.split("-")[1] - 1,
-          this.ToDate.split("-")[2],
-          23,
-          59,
-          59,
-        ).getTime();
-        var fromDatetimestamp = new Date(
-          this.FromDate.split("-")[0],
-          this.FromDate.split("-")[1] - 1,
-          this.FromDate.split("-")[2],
-          0,
-          0,
-          0,
-        ).getTime();
+        var toDatetimestamp = dayEndMs(this.ToDateValue);
+        var fromDatetimestamp = dayStartMs(this.FromDateValue);
         // this.visitList = [];
         this.getOrgbyVisits(fromDatetimestamp, toDatetimestamp, val, null);
       }
@@ -2088,22 +2079,8 @@ export default {
         this.next_token != null &&
         this.next_token != ""
       ) {
-        var toDatetimestamp = new Date(
-          this.ToDate.split("-")[0],
-          this.ToDate.split("-")[1] - 1,
-          this.ToDate.split("-")[2],
-          23,
-          59,
-          59,
-        ).getTime();
-        var fromDatetimestamp = new Date(
-          this.FromDate.split("-")[0],
-          this.FromDate.split("-")[1] - 1,
-          this.FromDate.split("-")[2],
-          0,
-          0,
-          0,
-        ).getTime();
+        var toDatetimestamp = dayEndMs(this.ToDateValue);
+        var fromDatetimestamp = dayStartMs(this.FromDateValue);
         this.getOrgbyVisits(
           fromDatetimestamp,
           toDatetimestamp,
@@ -2143,12 +2120,13 @@ export default {
       if (this.ToDate) {
         this.ToDateValue = this.formatDate(this.ToDate);
         this.menuToDate = false;
-        this.getOrgbyAuditLogs();
       }
       if (this.FromDate) {
         this.FromDateValue = this.formatDate(this.FromDate);
         this.menuFromDate = false;
       }
+      // Reload with the dates just picked (either OK button).
+      this.getOrgbyAuditLogs();
     },
     formatDate(date) {
       const d = new Date(date);
@@ -2216,22 +2194,8 @@ export default {
       return moment(date).format("MM-DD-YYYY");
     },
     getFilteredValues() {
-      var toDatetimestamp = new Date(
-        this.ToDate.split("-")[0],
-        this.ToDate.split("-")[1] - 1,
-        this.ToDate.split("-")[2],
-        23,
-        59,
-        59,
-      ).getTime();
-      var fromDatetimestamp = new Date(
-        this.FromDate.split("-")[0],
-        this.FromDate.split("-")[1] - 1,
-        this.FromDate.split("-")[2],
-        0,
-        0,
-        0,
-      ).getTime();
+      var toDatetimestamp = dayEndMs(this.ToDateValue);
+      var fromDatetimestamp = dayStartMs(this.FromDateValue);
       // this.visitList = [];
       this.getOrgbyVisits(
         fromDatetimestamp,
@@ -2275,23 +2239,9 @@ export default {
           .substr(0, 10);
         console.log("from", this.FromDate);
         this.height = window.innerHeight - 190;
-        var toDatetimestamp = new Date(
-          this.ToDate.split("-")[0],
-          this.ToDate.split("-")[1] - 1,
-          this.ToDate.split("-")[2],
-          23,
-          59,
-          59,
-        ).getTime();
+        var toDatetimestamp = dayEndMs(this.ToDateValue);
         console.log("tostamp", toDatetimestamp);
-        var fromDatetimestamp = new Date(
-          this.FromDate.split("-")[0],
-          this.FromDate.split("-")[1] - 1,
-          this.FromDate.split("-")[2],
-          23,
-          59,
-          59,
-        ).getTime();
+        var fromDatetimestamp = dayStartMs(this.FromDateValue);
         console.log("from", fromDatetimestamp);
         await this.getOrgbyVisits(
           fromDatetimestamp,

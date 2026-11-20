@@ -86,7 +86,6 @@
                     text
                     color="primary"
                     @click="confirmDate()"
-                    @click.stop="getFilteredValues()"
                   >
                     OK
                   </v-btn>
@@ -236,6 +235,7 @@
 </template>
 
 <script>
+import { dayStartMs, dayEndMs } from "@/utils/dates.js";
 import { activeOrgsSorted, pickDefaultOrg, rememberOrg } from "@/utils/orgDefaults.js";
 import moment from "moment";
 import Overlay from "@/components/Overlay.vue";
@@ -258,7 +258,7 @@ export default {
     search: "",
     overlay: false,
     AuditLogs: [],
-    NoData: "",
+    NoData: "No records found",
     loading: false,
     filterarray: [],
     headers: [
@@ -290,8 +290,8 @@ export default {
 
     setTimeout(() => {
       this.AuditLog(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
       );
     }, 200);
 
@@ -302,16 +302,16 @@ export default {
     audit_log() {
       // console.log("pankajajajajajajaaj",this.GetCurrentUserDetailsObj);
       this.AuditLog(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
       );
     },
 
     organization_name(val) {
       rememberOrg(val);
       this.AuditLog(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
       );
     },
   },
@@ -326,6 +326,8 @@ export default {
         this.FromDateValue = this.formatDate(this.FromDate);
         this.menuFromDate = false;
       }
+      // Reload with the dates just picked (either OK button).
+      this.getFilteredValues();
     },
     formatDate(date) {
       const d = new Date(date);
@@ -407,8 +409,8 @@ export default {
       // ).getTime();
       this.filterVisitorList = [];
       this.AuditLog(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
         this.audit_log,
       );
     },

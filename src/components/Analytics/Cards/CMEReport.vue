@@ -152,6 +152,7 @@
     <v-row no-gutters>
       <v-col cols="12" md="12" class="mt-n2">
         <v-data-table
+            :no-data-text="NoData"
           :headers="headers"
           :items="ScheduledCMEList"
           density="compact"
@@ -348,7 +349,7 @@ export default {
     FilterHost: "ALL",
     height: 0,
     ScheduledCMEList: [],
-    NoData: "",
+    NoData: "No records found",
     overlay: false,
     headers: [
       { title: "#", key: "sl_no" },
@@ -491,7 +492,7 @@ export default {
       } catch (error) {
         this.overlay = false;
         console.log("ListCmeError", error);
-        // this.NoData = error.errors[0].message;
+        this.NoData = (error && error.errors && error.errors[0] && error.errors[0].message) || "No data available";
       }
     },
     async getDesignationLists() {

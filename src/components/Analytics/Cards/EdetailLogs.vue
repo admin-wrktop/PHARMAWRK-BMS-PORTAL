@@ -86,7 +86,6 @@
                   text
                   color="primary"
                   @click="confirmDate()"
-                  v-on:click="getFilters()"
                 >
                   OK
                 </v-btn>
@@ -140,7 +139,7 @@
         class="elevation-0 TableClass"
         :headers="LogsHeaders"
         :items="LogsItems"
-        no-data-text="No Logs Found"
+        :no-data-text="NoData"
         @page-count="pageCount = $event"
         :page.sync="page"
         hide-default-footer
@@ -292,6 +291,7 @@
   </div>
 </template>
 <script>
+import { dayStartMs, dayEndMs } from "@/utils/dates.js";
 import Overlay from "@/components/Overlay.vue";
 import moment from "moment";
 import {
@@ -316,7 +316,7 @@ export default {
   },
   mixins: [GetOrgUsers, DownloadExcel],
   data: () => ({
-    NoData: "",
+    NoData: "No records found",
     FromDate: new Date(),
     ToDate: new Date(),
     date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
@@ -460,8 +460,8 @@ export default {
         // ).getTime();
 
         this.geEDtailingLogs(
-          new Date(this.FromDateValue).getTime(),
-          new Date(this.ToDateValue).getTime(),
+          dayStartMs(this.FromDateValue),
+          dayEndMs(this.ToDateValue),
           null,
           null,
         );
@@ -486,8 +486,8 @@ export default {
         //   59
         // ).getTime();
         this.geEDtailingLogs(
-          new Date(this.FromDateValue).getTime(),
-          new Date(this.ToDateValue).getTime(),
+          dayStartMs(this.FromDateValue),
+          dayEndMs(this.ToDateValue),
           null,
           val,
         );
@@ -520,8 +520,8 @@ export default {
     // ).getTime();
 
     this.geEDtailingLogs(
-      new Date(this.FromDateValue).getTime(),
-      new Date(this.ToDateValue).getTime(),
+      dayStartMs(this.FromDateValue),
+      dayEndMs(this.ToDateValue),
       null,
       null,
     );
@@ -543,6 +543,8 @@ export default {
         this.FromDateValue = this.formatDate(this.FromDate);
         this.menuFromDate = false;
       }
+      // Reload with the dates just picked (either OK button).
+      this.getFilters();
     },
     formatDate(date) {
       const d = new Date(date);
@@ -570,8 +572,8 @@ export default {
       //   0
       // ).getTime();
       this.geEDtailingLogs(
-        new Date(this.FromDateValue).getTime(),
-        new Date(this.ToDateValue).getTime(),
+        dayStartMs(this.FromDateValue),
+        dayEndMs(this.ToDateValue),
         this.designation,
         this.employe,
         this.next_token,
@@ -650,7 +652,7 @@ export default {
         this.loading = false;
         this.LogsItems = [];
         console.log("ListAllEDetailLogsError", error);
-        // this.NoData = error.errors[0].message;
+        this.NoData = (error && error.errors && error.errors[0] && error.errors[0].message) || "No data available";
       }
     },
     async getUsersLists(user_type) {
