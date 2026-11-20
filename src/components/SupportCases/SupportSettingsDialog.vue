@@ -40,6 +40,7 @@
         </template>
       </v-card-text>
 
+      <v-alert v-if="saveError" type="error" variant="tonal" density="compact" class="mx-5 mb-2">{{ saveError }}</v-alert>
       <v-card-actions class="px-5 pb-4">
         <v-spacer />
         <v-btn variant="text" @click="close">Cancel</v-btn>
@@ -48,7 +49,6 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-    <v-snackbar v-model="snack.show" :color="snack.color" location="top" timeout="3000">{{ snack.text }}</v-snackbar>
   </v-dialog>
 </template>
 
@@ -72,7 +72,7 @@ export default {
     loading: false,
     loadError: "",
     saving: false,
-    snack: { show: false, text: "", color: "primary" },
+    saveError: "",
   }),
   computed: {
     hasInvalid() {
@@ -96,6 +96,7 @@ export default {
       return bad.length ? [`Not a valid email: ${bad.join(", ")}`] : [];
     },
     async load() {
+      this.saveError = "";
       this.loading = true;
       this.loadError = "";
       try {
@@ -113,13 +114,13 @@ export default {
       }
     },
     async save() {
+      this.saveError = "";
       this.saving = true;
       try {
         await supportCall("bmsUpdateSupportSettings", { ...this.form });
-        this.snack = { show: true, text: "Notification settings saved", color: "primary" };
-        setTimeout(this.close, 600);
+        this.close();
       } catch (e) {
-        this.snack = { show: true, text: e.message, color: "error" };
+        this.saveError = e.message;
       } finally {
         this.saving = false;
       }

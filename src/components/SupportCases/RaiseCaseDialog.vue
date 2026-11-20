@@ -65,6 +65,7 @@
             label="Description *"
             hint="What happened, steps to reproduce, who is affected"
             persistent-hint
+            class="mb-3"
             variant="outlined"
             density="compact"
             rows="4"
@@ -118,13 +119,22 @@
         </v-form>
       </v-card-text>
 
+      <v-alert
+        v-if="error"
+        type="error"
+        variant="tonal"
+        density="compact"
+        class="mx-5 mb-2"
+        closable
+        @click:close="error = ''"
+        >{{ error }}</v-alert
+      >
       <v-card-actions class="px-5 pb-4">
         <v-spacer />
         <v-btn variant="text" :disabled="saving" @click="close">Cancel</v-btn>
         <v-btn color="primary" variant="flat" prepend-icon="mdi-send" :loading="saving" @click="submit">Raise case</v-btn>
       </v-card-actions>
     </v-card>
-    <v-snackbar v-model="snack.show" color="error" location="top" timeout="4000">{{ snack.text }}</v-snackbar>
   </v-dialog>
 </template>
 
@@ -174,7 +184,7 @@ export default {
     progress: {},
     dragging: false,
     saving: false,
-    snack: { show: false, text: "" },
+    error: "",
     accept: ACCEPT_ATTR,
     severityItems: SEVERITY_ORDER.map((s) => ({ value: s, title: SUPPORT_SEVERITY[s].label })),
     typeItems: toItems(CASE_TYPES),
@@ -208,6 +218,7 @@ export default {
     fileIcon: fileIconFor,
     bytes: formatBytes,
     reset() {
+      this.error = "";
       this.scope = "ORG";
       this.form = blank();
       this.users = [];
@@ -256,6 +267,7 @@ export default {
     async submit() {
       const { valid } = await this.$refs.form.validate();
       if (!valid) return;
+      this.error = "";
       this.saving = true;
       try {
         const orgId = this.scope === "ORG" ? this.form.organization_id : undefined;
@@ -279,7 +291,7 @@ export default {
         this.$emit("created", res && res.ticket);
         this.close();
       } catch (e) {
-        this.snack = { show: true, text: e.message };
+        this.error = e.message;
       } finally {
         this.saving = false;
       }
