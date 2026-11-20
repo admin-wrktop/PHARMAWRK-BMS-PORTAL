@@ -22,6 +22,9 @@ export const NAV_ITEMS = [
 
   H("Support"),
   I("Support Cases", "mdi-lifebuoy", "Support Cases"),
+
+  H("Administration"),
+  I("BMS Users", "mdi-account-key-outline", "BMS Users"),
 ];
 
 export const PAGE_DESCRIPTIONS = {
@@ -33,6 +36,8 @@ export const PAGE_DESCRIPTIONS = {
   "Visit Log": "Field visits logged by reps, by organization and date.",
   "Audit Log": "Who changed what, and when.",
   Notification: "Notification settings and messages sent to users.",
+  "BMS Users":
+    "Back-office staff who can sign in to the BMS, their role and status.",
   "Set Users OTP":
     "Fixed sign-in codes for specific users, with an expiry. Every change is audit-logged.",
   "Support Cases":

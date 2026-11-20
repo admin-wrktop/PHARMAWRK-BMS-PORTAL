@@ -75,6 +75,14 @@ const routes = [
           ),
       },
       {
+        name: "BMS Users",
+        path: "/BMSUsers",
+        component: () =>
+          import(
+            /* webpackChunkName: "BmsUsers" */ "../views/ChildHomePages/BmsUsers.vue"
+          ),
+      },
+      {
         name: "Set Users OTP",
         path: "/SetUsersOTP",
         component: () =>

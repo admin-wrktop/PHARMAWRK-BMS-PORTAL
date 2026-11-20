@@ -37,5 +37,6 @@ export function previewUser() {
     user_name: "Preview Admin",
     user_email_id: "preview.admin@example.com",
     user_type: "BMS ADMIN",
+    user_role: "BMS_ADMIN",
   };
 }
