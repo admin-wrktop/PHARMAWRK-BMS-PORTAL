@@ -111,6 +111,8 @@
                     ? "Platform case: notes are visible to BMS staff only."
                     : internal
                     ? "Only BMS staff can see this note."
+                    : ticket.source_app === "BMS" && !ticket.on_behalf_of_user
+                    ? "Raised by staff: the organisation's admins see this reply; no one is emailed."
                     : "The customer is emailed this reply."
                 }}
               </span>

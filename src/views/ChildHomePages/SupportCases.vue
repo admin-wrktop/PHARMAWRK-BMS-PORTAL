@@ -1,7 +1,7 @@
 <template>
   <div class="sc-page">
     <SupportSettingsDialog v-model="settingsOpen" />
-    <RaiseCaseDialog v-model="raiseOpen" :orgs="orgItems" @created="onRaised" />
+    <RaiseCaseDialog v-model="raiseOpen" :orgs="orgItems.filter((o) => o.value !== 'PLATFORM')" @created="onRaised" />
 
     <!-- Per-status counts (click to filter) -->
     <div class="sc-counts">
@@ -239,9 +239,11 @@ export default {
         const id = c.organization_id;
         if (id && !map.has(id)) map.set(id, c.organization_name || id);
       });
-      return [...map.entries()]
+      map.delete("PLATFORM");
+      const list = [...map.entries()]
         .map(([value, title]) => ({ value, title }))
         .sort((a, b) => a.title.localeCompare(b.title));
+      return [{ value: "PLATFORM", title: "Platform (internal)" }, ...list];
     },
     countTiles() {
       const c = this.counts || {};
