@@ -65,12 +65,12 @@
             label="Description *"
             hint="What happened, steps to reproduce, who is affected"
             persistent-hint
-            class="mb-3"
             variant="outlined"
             density="compact"
             rows="4"
             auto-grow
             max-rows="10"
+            maxlength="8000"
             :rules="[(v) => (v && v.length >= 10) || 'At least 10 characters']"
             @paste="onPaste"
           />
@@ -308,6 +308,8 @@ export default {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0 12px;
+  /* room for the description's hint/error line above the floating labels */
+  margin-top: 14px;
 }
 @media (max-width: 600px) {
   .rc-grid {

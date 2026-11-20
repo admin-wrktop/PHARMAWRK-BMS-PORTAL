@@ -125,6 +125,7 @@
               rows="3"
               auto-grow
               max-rows="10"
+              maxlength="8000"
               hide-details
               @paste="onPaste"
             />
