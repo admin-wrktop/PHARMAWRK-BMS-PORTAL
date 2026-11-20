@@ -171,7 +171,7 @@ export default {
     UserList: [],
     UserList1: [],
     new_Remarkslist: "",
-    userName: "",
+    userName: [],
     text: [],
     notification_subject: "",
 
@@ -182,7 +182,7 @@ export default {
   }),
   computed: {
     allProductsSelected() {
-      return this.UserList.length === this.userName.length;
+      return this.UserList.length === (this.userName || []).length;
     },
     someProductsSelected() {
       return this.UserList.length > 0 && !this.allProductsSelected;
@@ -267,7 +267,10 @@ export default {
         this.loading = true;
         var inputparams = {
           organization_id: this.organization_name,
-          user_ids: this.UserType == "ALL" ? undefined : this.userName,
+          user_ids:
+            this.UserType == "ALL"
+              ? undefined
+              : (Array.isArray(this.userName) ? this.userName : [this.userName]).filter(Boolean),
           setting_id: this.StoreObj.setting_id,
           action: this.UserType,
         };
@@ -294,14 +297,15 @@ export default {
         }
       } catch (error) {
         this.loading = false;
-        // this.SnackBarComponent = {
-        //   SnackbarVmodel: true,
-        //   SnackbarColor: "red",
-        //   SnackbarText: error.errors[0].message,
-        //   Top: true,
-        //   timeout: 2000,
-        // };
-        console.log("errorssss", error);
+        this.SnackBarComponent = {
+          SnackbarVmodel: true,
+          SnackbarColor: "red",
+          SnackbarText:
+            (error && error.errors && error.errors[0] && error.errors[0].message) ||
+            "Could not send the notification",
+          Top: true,
+          timeout: 3000,
+        };
       }
     },
     async getUsersLists() {

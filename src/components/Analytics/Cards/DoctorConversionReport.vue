@@ -146,12 +146,12 @@
         <template
           v-for="(h, i) in headers"
           :key="i"
-          v-slot:[`header.${h.value}`]="{ header }"
+          v-slot:[headerSlot(h)]="{ header }"
         >
           <div>
             <v-tooltip color="primary" activator="parent" location="bottom">
               <template v-slot:activator="{ props }">
-                <span v-bind="props">{{ header.text }}</span>
+                <span v-bind="props">{{ header.title || header.text }}</span>
               </template>
               <span>{{ header.tooltip_text }}</span>
             </v-tooltip>
@@ -426,6 +426,9 @@ export default {
     },
   },
   methods: {
+    headerSlot(h) {
+      return "header." + (h.key || h.value);
+    },
     checkPagination() {
       this.getDoctorConversionReport(this.next_token);
     },

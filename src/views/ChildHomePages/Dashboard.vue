@@ -6,7 +6,7 @@
         <v-row>
           <v-col cols="12" xs="12" sm="12" md="12">
             <v-card flat class="pa-3 bg-transparent">
-              <v-row class="space-between">
+              <v-row class="space-between dash-filters">
                 <v-radio-group
                   inline
                   density="compact"
@@ -765,6 +765,18 @@ export default {
 </script>
 
 <style>
+@media (max-width: 600px) {
+  .dash-filters {
+    margin: 0 !important;
+    gap: 4px;
+  }
+  .dash-filters > .v-input {
+    flex: 1 1 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
 .dash-empty {
   text-align: center;
   padding: 64px 16px;

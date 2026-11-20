@@ -2517,8 +2517,8 @@ export default {
     },
     DownloadMyExcel(Header, ArrayList, FileName) {
       let excelHeader = Header.map((header) => ({
-        label: header.text,
-        value: header.value,
+        label: header.title || header.text,
+        value: header.key || header.value,
       }));
       excelHeader.splice(0, 1);
       if (FileName == "Visits") {

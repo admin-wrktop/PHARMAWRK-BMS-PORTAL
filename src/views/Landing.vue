@@ -353,4 +353,21 @@ export default {
     padding: 12px;
   }
 }
+@media (max-width: 600px) {
+  .pw-appbar__logo {
+    display: none;
+  }
+  .pw-crumbs {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .pw-crumbs > :not(.pw-crumbs__current) {
+    display: none;
+  }
+  .pw-crumbs__current {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
 </style>

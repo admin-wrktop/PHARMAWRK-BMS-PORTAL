@@ -150,12 +150,12 @@
       >
         <template
           v-for="(h, i) in LogsHeaders"
-          v-slot:[`header.${h.value}`]="{ header }"
+          v-slot:[headerSlot(h)]="{ header }"
         >
           <div :key="i">
             <v-tooltip color="primary" activator="parent" location="bottom">
               <template v-slot:activator="{ props }">
-                <span v-bind="props">{{ header.text }}</span>
+                <span v-bind="props">{{ header.title || header.text }}</span>
               </template>
               <span>{{ header.tooltip_text }}</span>
             </v-tooltip>
@@ -534,6 +534,9 @@ export default {
     // this.getUsersLists();
   },
   methods: {
+    headerSlot(h) {
+      return "header." + (h.key || h.value);
+    },
     confirmDate() {
       if (this.ToDate) {
         this.ToDateValue = this.formatDate(this.ToDate);
