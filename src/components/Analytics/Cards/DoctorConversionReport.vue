@@ -130,7 +130,7 @@
     </v-row>
     <v-col cols="12" sm="12" md="12" xs="12" class="mt-n5">
       <v-data-table
-            :no-data-text="NoData"
+            :no-data-text="ReportNoData"
         v-model:page="page"
         density="compact"
         :search="search"
@@ -293,6 +293,7 @@ export default {
   mixins: [GetOrgUsers, DownloadExcel],
   data: () => ({
     NoData: "No data available",
+    ReportNoData: "No data available",
     // product_name: "ALL",
     productList: [],
     DruglistArray: [],
@@ -738,7 +739,7 @@ export default {
       } catch (error) {
         this.loading = false;
         console.log("Err", error);
-        this.NoData = (error && error.errors && error.errors[0] && error.errors[0].message) || "No data available";
+        this.ReportNoData = (error && error.errors && error.errors[0] && error.errors[0].message) || "No data available";
         this.DoctorConversionList = [];
         this.overlay = false;
       }

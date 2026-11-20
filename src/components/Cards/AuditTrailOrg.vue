@@ -1583,18 +1583,13 @@ export default {
     Territory_Status: ["ACTIVE", "INACTIVE"],
     territory_status_value: "ACTIVE",
     povTypeItems: [
-      {
-        text: "DOCTOR",
-        value: "DOCTOR",
-      },
-      {
-        text: "PHARMACIST",
-        value: "PHARMACIST",
-      },
-      {
-        text: "PHARMACIST",
-        value: "PHARMACIST",
-      },
+      { text: "DOCTOR", value: "DOCTOR" },
+      { text: "PHARMACIST", value: "PHARMACIST" },
+      { text: "DISTRIBUTOR", value: "DISTRIBUTOR" },
+      { text: "HOSPITAL", value: "HOSPITAL" },
+      { text: "CLIENT", value: "CLIENT" },
+      { text: "COLLECTION CENTER", value: "COLLECTION_CENTER" },
+      { text: "PATIENT", value: "PATIENT" },
     ],
     UserList: [],
     auditList: [],
