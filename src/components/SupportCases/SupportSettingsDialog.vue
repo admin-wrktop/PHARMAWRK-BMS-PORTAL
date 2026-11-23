@@ -106,6 +106,38 @@
             </div>
           </div>
           </template>
+
+          <!-- Auto-close: only when this environment's backend supports it (see autoCloseOn) -->
+          <template v-if="autoCloseOn">
+            <div class="ss-section mt-4">Auto-close</div>
+            <div class="pw-muted ss-help">
+              Cases waiting on the customer are closed automatically after this many days without a reply; a
+              reply re-opens the case.
+            </div>
+            <div class="ss-autoclose">
+              <v-switch
+                v-model="form.auto_close_enabled"
+                label="Close cases automatically"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-text-field
+                v-model.number="form.auto_close_days"
+                type="number"
+                :min="AUTO_CLOSE.MIN"
+                :max="AUTO_CLOSE.MAX"
+                step="1"
+                label="Days without a reply"
+                suffix="days"
+                variant="outlined"
+                density="compact"
+                :disabled="!form.auto_close_enabled"
+                :error-messages="autoCloseError"
+              />
+            </div>
+          </template>
         </template>
       </v-card-text>
 
@@ -127,6 +159,8 @@ import { supportCall } from "@/mixins/SupportCases/SupportCasesApi.js";
 import { EMAIL_REGEX, SUPPORT_SEVERITY, SEVERITY_ORDER, severityRecipients } from "@/utils/supportCases.js";
 
 const MAX_EMAILS = 20;
+// Auto-close bounds and default (proposed contract; Backend confirms the final values).
+const AUTO_CLOSE = { MIN: 1, MAX: 30, DEFAULT: 3 };
 const DEFAULT_FIELDS = [
   { key: "to_emails", label: "To", hint: "Emailed for every new case and customer reply." },
   { key: "cc_emails", label: "CC", hint: "Copied on those emails." },
@@ -145,9 +179,19 @@ export default {
     // Shown only when the backend returns by_severity: a backend without severity routing (PROD until
     // Backend's release) would accept a save and drop the lists, so staff never see fields that don't work.
     severityOn: false,
+    // Shown only when the backend returns the auto-close fields (same reason as severityOn).
+    autoCloseOn: false,
+    AUTO_CLOSE,
     DELIMS: [",", " ", ";"],
     defaultFields: DEFAULT_FIELDS,
-    form: { to_emails: [], cc_emails: [], urgent_to_emails: [], by_severity: emptySeverities() },
+    form: {
+      to_emails: [],
+      cc_emails: [],
+      urgent_to_emails: [],
+      by_severity: emptySeverities(),
+      auto_close_enabled: true,
+      auto_close_days: AUTO_CLOSE.DEFAULT,
+    },
     loading: false,
     loadError: "",
     saving: false,
@@ -157,6 +201,13 @@ export default {
     who() {
       return Object.fromEntries(SEVERITY_ORDER.map((s) => [s, severityRecipients(this.form, s)]));
     },
+    autoCloseError() {
+      if (!this.autoCloseOn || !this.form.auto_close_enabled) return [];
+      const d = this.form.auto_close_days;
+      if (!Number.isInteger(d) || d < AUTO_CLOSE.MIN || d > AUTO_CLOSE.MAX)
+        return [`Enter whole days from ${AUTO_CLOSE.MIN} to ${AUTO_CLOSE.MAX}`];
+      return [];
+    },
     hasInvalid() {
       const lists = [
         this.form.to_emails,
@@ -164,7 +215,11 @@ export default {
         this.form.urgent_to_emails,
         ...SEVERITY_ORDER.flatMap((s) => [this.form.by_severity[s].to_emails, this.form.by_severity[s].cc_emails]),
       ];
-      return lists.some((l) => this.listError(l).length) || SEVERITY_ORDER.some((s) => this.ccError(s).length);
+      return (
+        lists.some((l) => this.listError(l).length) ||
+        SEVERITY_ORDER.some((s) => this.ccError(s).length) ||
+        this.autoCloseError.length > 0
+      );
     },
   },
   watch: {
@@ -199,7 +254,9 @@ export default {
       try {
         const res = await supportCall("bmsGetSupportSettings", {});
         const s = (res && (res.settings || res)) || {};
-        this.severityOn = Object.prototype.hasOwnProperty.call(s, "by_severity");
+        const has = (k) => Object.prototype.hasOwnProperty.call(s, k);
+        this.severityOn = has("by_severity");
+        this.autoCloseOn = has("auto_close_enabled") || has("auto_close_days");
         const bySev = emptySeverities();
         SEVERITY_ORDER.forEach((k) => {
           const v = (s.by_severity && s.by_severity[k]) || {};
@@ -210,6 +267,8 @@ export default {
           cc_emails: s.cc_emails || [],
           urgent_to_emails: s.urgent_to_emails || [],
           by_severity: bySev,
+          auto_close_enabled: s.auto_close_enabled !== false,
+          auto_close_days: Number.isInteger(s.auto_close_days) ? s.auto_close_days : AUTO_CLOSE.DEFAULT,
         };
       } catch (e) {
         this.loadError = e.message;
@@ -226,6 +285,10 @@ export default {
           to_emails: this.form.to_emails,
           cc_emails: this.form.cc_emails,
           urgent_to_emails: this.form.urgent_to_emails,
+          ...(this.autoCloseOn && {
+            auto_close_enabled: this.form.auto_close_enabled,
+            auto_close_days: this.form.auto_close_days,
+          }),
           ...(this.severityOn && {
             by_severity: Object.fromEntries(
               SEVERITY_ORDER.map((k) => [
@@ -250,6 +313,17 @@ export default {
 </script>
 
 <style scoped>
+.ss-autoclose {
+  display: grid;
+  grid-template-columns: auto 200px;
+  gap: 16px;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .ss-autoclose {
+    grid-template-columns: 1fr;
+  }
+}
 .ss-section {
   font-weight: 600;
   font-size: 14px;
