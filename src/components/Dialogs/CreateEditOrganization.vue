@@ -39,7 +39,7 @@
               class="FontSize"
               :rules="[
                 (v) => !!v || 'Required',
-                (v) => (v && v.length <= 41) || 'Maximum 40 characters',
+                (v) => (v && v.length <= 40) || 'Maximum 40 characters',
               ]"
               :readonly="StoreObj.Action == 'VIEW'"
               v-model="create_edit_org.organization_name"
@@ -57,7 +57,7 @@
               :rules="[
                 (v) => !!v || 'Required',
                 (v) =>
-                  /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{3,3})+$/.test(v) ||
+                  /^\w+([.+-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/.test(v) ||
                   'Email must be valid',
               ]"
               :readonly="StoreObj.Action == 'VIEW' || StoreObj.Action == 'EDIT'"
@@ -66,6 +66,7 @@
               class="FontSize"
               :items="DrugMappingList"
               v-model="create_edit_org.DrugMap"
+              :rules="[(v) => !!v || 'Required']"
               label="Select Product Map *"
               density="compact"
               variant="outlined"
@@ -79,6 +80,7 @@
               class="FontSize"
               :items="ManufacturerList"
               v-model="create_edit_org.Manufacturer"
+              :rules="[(v) => !!v || 'Required']"
               label="Select Manufacturer Type *"
               density="compact"
               variant="outlined"
@@ -310,8 +312,9 @@ export default {
         this.selectedTimezone = null;
       }
     },
-    ValidateForm() {
-      if (this.$refs.form.validate()) {
+    async ValidateForm() {
+      const { valid } = await this.$refs.form.validate();
+      if (valid) {
         if (this.StoreObj.Action == "CREATE") {
           this.CreateOrg();
         } else if (this.StoreObj.Action == "EDIT") {
@@ -366,11 +369,15 @@ export default {
           this.CreateEditOrgEmit((this.Toggle = 2));
         }
       } catch (error) {
+        console.error(error);
         this.loading = false;
         this.SnackBarComponent = {
           SnackbarVmodel: true,
           SnackbarColor: "red",
-          SnackbarText: error.errors[0].message,
+          SnackbarText:
+            (error && error.errors && error.errors[0] && error.errors[0].message) ||
+            (error && error.message) ||
+            "Something went wrong. Please try again.",
           Top: true,
         };
       }
@@ -413,11 +420,15 @@ export default {
           this.CreateEditOrgEmit((this.Toggle = 2));
         }
       } catch (error) {
+        console.error(error);
         this.loading = false;
         this.SnackBarComponent = {
           SnackbarVmodel: true,
           SnackbarColor: "red",
-          SnackbarText: error.errors[0].message,
+          SnackbarText:
+            (error && error.errors && error.errors[0] && error.errors[0].message) ||
+            (error && error.message) ||
+            "Something went wrong. Please try again.",
           Top: true,
         };
       }

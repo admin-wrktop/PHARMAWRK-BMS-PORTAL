@@ -252,8 +252,9 @@ export default {
     },
   },
   methods: {
-    ValidateForm() {
-      if (this.$refs.form.validate()) {
+    async ValidateForm() {
+      const { valid } = await this.$refs.form.validate();
+      if (valid) {
         if (this.StoreObj.Action == "CREATE") {
           this.createDevice();
         } else if (this.StoreObj.Action == "EDIT") {
