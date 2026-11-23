@@ -27,6 +27,8 @@ export function userOtpMock(command, p) {
       items.unshift(item);
       return Promise.resolve({ status: "SUCCESS", Status_Message: "Fixed sign-in code set", data: item });
     }
+    case "reveal":
+      return Promise.resolve(p.target_user_id === "u2" ? { status: "SUCCESS", data: { otp: null } } : { status: "SUCCESS", data: { otp: "482915" } });
     case "remove":
       items = items.filter((x) => x.user_id !== p.target_user_id);
       return Promise.resolve({ status: "SUCCESS", Status_Message: "Fixed sign-in code removed" });

@@ -4,9 +4,9 @@
     <section class="pw-surface otp-form-card">
       <div class="pw-section-title">Set a fixed sign-in code</div>
       <div class="pw-muted otp-sub">
-        While the code is valid, the user gets no SMS and signs in with this code. It is stored only as a
-        hash and can never be shown again, so note it down before you save. Every change is audit-logged
-        and emailed to you.
+        While the code is valid, the user gets no SMS and signs in with this code. It is stored encrypted;
+        you can reveal it from the list below, and every reveal is audit-logged. Every change is
+        audit-logged and emailed to you.
       </div>
 
       <v-form ref="form" class="otp-form" @submit.prevent="askConfirm">
@@ -124,6 +124,44 @@
           <div class="otp-strong">{{ item.user_name || "–" }}</div>
           <div v-if="item.phone_hint" class="pw-muted otp-small otp-mono">{{ item.phone_hint }}</div>
         </template>
+        <template #[`item.otp`]="{ item }">
+          <span v-if="!isActive(item)" class="pw-muted">–</span>
+          <span v-else-if="item.can_reveal === false || unavailable[item.user_id]" class="pw-muted otp-small">
+            Not available — set again
+          </span>
+          <div v-else-if="revealed[item.user_id]" class="otp-cell">
+            <!-- never in support screenshots -->
+            <span class="otp-mono otp-code support-capture-exclude">{{ revealed[item.user_id] }}</span>
+            <v-btn
+              icon
+              size="x-small"
+              variant="text"
+              :aria-label="`Copy code for ${item.user_name || item.user_id}`"
+              @click="copyCode(item)"
+              ><v-icon size="18">mdi-content-copy</v-icon></v-btn
+            >
+            <v-btn
+              icon
+              size="x-small"
+              variant="text"
+              :aria-label="`Hide code for ${item.user_name || item.user_id}`"
+              @click="hideCode(item.user_id)"
+              ><v-icon size="18">mdi-eye-off-outline</v-icon></v-btn
+            >
+          </div>
+          <div v-else class="otp-cell">
+            <span class="otp-mono otp-dots">●●●●●●</span>
+            <v-btn
+              icon
+              size="x-small"
+              variant="text"
+              :loading="revealing === item.user_id"
+              :aria-label="`Show code for ${item.user_name || item.user_id}`"
+              @click="revealCode(item)"
+              ><v-icon size="18">mdi-eye-outline</v-icon></v-btn
+            >
+          </div>
+        </template>
         <template #[`item.expires_at_ms`]="{ item }">
           <StatusChip :status="expiryLabel(item)" :tone="expiryTone(item)" />
         </template>
@@ -159,15 +197,15 @@
           <div class="otp-note">
             <v-icon size="18" class="mr-2">mdi-alert-outline</v-icon>
             <div>
-              Note the code now: <span class="otp-mono otp-code">{{ form.otp }}</span><br />
-              It can't be shown again after you save.
+              The code is <span class="otp-mono otp-code">{{ form.otp }}</span><br />
+              You can reveal it later from the list; every reveal is audit-logged.
             </div>
           </div>
         </v-card-text>
         <v-card-actions class="px-5 pb-4">
           <v-spacer />
           <v-btn variant="text" @click="confirmOpen = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" :loading="saving" @click="save">I've noted it, set code</v-btn>
+          <v-btn color="primary" variant="flat" :loading="saving" @click="save">Set code</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -198,6 +236,7 @@ import {
   listUserOtps,
   setUserOtp,
   removeUserOtp,
+  revealUserOtp,
   listOrgUsers,
   listActiveOrgs,
   otpProblem,
@@ -205,6 +244,7 @@ import {
 import { activeOrgsSorted } from "@/utils/orgDefaults.js";
 
 const DAY = 86400000;
+const REVEAL_MS = 30000; // a revealed code hides itself again after 30 s
 
 export default {
   name: "SetUsersOtp",
@@ -226,11 +266,16 @@ export default {
     search: "",
     removeTarget: null,
     removing: false,
+    revealed: {}, // user_id -> code, shown for REVEAL_MS then hidden again
+    revealTimers: {},
+    revealing: null,
+    unavailable: {}, // user_id -> true when the code was set before encrypted storage
     snack: { show: false, text: "", color: "primary" },
     dayItems: [1, 2, 3, 5, 7, 14, 21, 30].map((d) => ({ value: d, title: `${d} day${d > 1 ? "s" : ""}` })),
     headers: [
       { title: "User", key: "user_name" },
       { title: "Organisation", key: "organization_name" },
+      { title: "Code", key: "otp", sortable: false },
       { title: "Reason", key: "reason" },
       { title: "Expiry", key: "expires_at_ms" },
       { title: "Set by", key: "set_by_name" },
@@ -269,7 +314,53 @@ export default {
     this.loadOrgs();
     this.load();
   },
+  beforeUnmount() {
+    this.hideAll();
+  },
   methods: {
+    async revealCode(item) {
+      if (this.revealing) return;
+      this.revealing = item.user_id;
+      try {
+        const otp = await revealUserOtp(item.user_id);
+        if (!otp) {
+          this.unavailable = { ...this.unavailable, [item.user_id]: true };
+          return;
+        }
+        this.revealed = { ...this.revealed, [item.user_id]: otp };
+        clearTimeout(this.revealTimers[item.user_id]);
+        this.revealTimers[item.user_id] = setTimeout(() => this.hideCode(item.user_id), REVEAL_MS);
+      } catch (e) {
+        if (/not available|set again|hash|before/i.test(e.message)) {
+          this.unavailable = { ...this.unavailable, [item.user_id]: true };
+        } else {
+          this.toast(e.message, "error");
+        }
+      } finally {
+        this.revealing = null;
+      }
+    },
+    hideCode(userId) {
+      clearTimeout(this.revealTimers[userId]);
+      delete this.revealTimers[userId];
+      const { [userId]: _gone, ...rest } = this.revealed; // eslint-disable-line no-unused-vars
+      this.revealed = rest;
+    },
+    hideAll() {
+      Object.values(this.revealTimers).forEach(clearTimeout);
+      this.revealTimers = {};
+      this.revealed = {};
+    },
+    async copyCode(item) {
+      const code = this.revealed[item.user_id];
+      if (!code) return;
+      try {
+        await navigator.clipboard.writeText(code);
+        this.toast("Code copied", "success");
+      } catch (e) {
+        this.toast("Couldn't copy. Select the code and copy it instead.", "error");
+      }
+    },
     otpProblem,
     isActive(item) {
       return item.active !== false && Number(item.expires_at_ms) > Date.now();
@@ -448,6 +539,16 @@ export default {
   background: rgba(245, 158, 11, 0.12);
   color: #92400e;
   font-size: 13.5px;
+}
+.otp-cell {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+.otp-dots {
+  letter-spacing: 0.1em;
+  color: var(--pw-muted);
 }
 .otp-code {
   font-size: 16px;

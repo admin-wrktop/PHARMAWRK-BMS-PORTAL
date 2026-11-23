@@ -107,6 +107,11 @@ export const SetUserOtp = /* GraphQL */ `
     SetUserOtp(input: $input)
   }
 `;
+export const RevealUserOtp = /* GraphQL */ `
+  mutation RevealUserOtp($input: RevealUserOtpInput!) {
+    RevealUserOtp(input: $input)
+  }
+`;
 export const RemoveUserOtp = /* GraphQL */ `
   mutation RemoveUserOtp($input: RemoveUserOtpInput!) {
     RemoveUserOtp(input: $input)

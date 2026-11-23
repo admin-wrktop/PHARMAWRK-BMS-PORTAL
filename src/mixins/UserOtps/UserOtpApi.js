@@ -1,11 +1,12 @@
 /**
  * Set Users OTP: fixed sign-in codes for specific mobile users (BMS admins
- * only). Contract: set-users-otp-API.md (backend 4e57961). The backend never
- * returns a saved code — it is stored only as a salted hash.
+ * only). Contract: set-users-otp-API.md (backend 4e57961). Codes are stored
+ * encrypted; RevealUserOtp returns one on request and is audit-logged. Codes
+ * set before that change were stored only as a hash (can_reveal: false).
  */
 import { generateClient } from "aws-amplify/api";
 import { ListUserOtps, ListUsersOfOrganization } from "@/graphql/queries.js";
-import { SetUserOtp, RemoveUserOtp } from "@/graphql/mutations.js";
+import { SetUserOtp, RemoveUserOtp, RevealUserOtp } from "@/graphql/mutations.js";
 
 const client = generateClient();
 
@@ -40,6 +41,19 @@ export async function listUserOtps({ include_expired = false, organization_id } 
 
 /** { organization_id, target_user_id, otp (6 digits), expires_in_days (1-30), reason (3-200) } */
 export const setUserOtp = (input) => run(SetUserOtp, "SetUserOtp", input, "set");
+
+/**
+ * Reveal a user's saved code (audit-logged by the backend). Resolves the code,
+ * or null when the code was set before codes were stored encrypted.
+ */
+export async function revealUserOtp(target_user_id) {
+  const res = await run(RevealUserOtp, "RevealUserOtp", { target_user_id }, "reveal");
+  if (res && res.status && String(res.status).toUpperCase() !== "SUCCESS") {
+    throw new Error(res.Status_Message || res.message || "Couldn't show the code. Please try again.");
+  }
+  const otp = res && res.data && res.data.otp;
+  return otp ? String(otp) : null;
+}
 
 export const removeUserOtp = (target_user_id) =>
   run(RemoveUserOtp, "RemoveUserOtp", { target_user_id }, "remove");
