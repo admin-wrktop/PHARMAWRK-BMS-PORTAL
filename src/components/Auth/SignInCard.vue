@@ -156,11 +156,14 @@ export default {
           this.loading = false;
           return this.SignIn();
         }
-        this.notify(
-          String(error).includes("NOT_AUTHORIZED")
-            ? "No BMS account found for this email"
-            : error.message,
-        );
+        const msg = String((error && error.message) || error);
+        if (String(error).includes("NOT_AUTHORIZED")) {
+          this.notify("No BMS account found for this email");
+        } else if (/CreateAuthChallenge failed|Email address is not verified|failed the check/i.test(msg)) {
+          this.notify("We couldn't send a sign-in code to this email right now. Please contact PharmaWRK support.");
+        } else {
+          this.notify(msg);
+        }
       } finally {
         this.loading = false;
       }

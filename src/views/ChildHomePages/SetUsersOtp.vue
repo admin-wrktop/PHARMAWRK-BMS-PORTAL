@@ -24,7 +24,7 @@
           :items="userItems"
           :loading="usersLoading"
           :disabled="!form.organization_id"
-          :no-data-text="usersError || 'No users in this organisation'"
+          :no-data-text="usersError || (userItems.length ? 'No matching user' : 'No users in this organisation')"
           label="User *"
           variant="outlined"
           density="compact"
