@@ -346,6 +346,10 @@ export default {
           expires_in_days: this.form.expires_in_days,
           reason: this.form.reason,
         });
+        if (res && res.status && String(res.status).toUpperCase() !== "SUCCESS") {
+          throw new Error(res.Status_Message || res.message || "Couldn't set the code. Please try again.");
+        }
+        const savedUserId = this.form.target_user_id;
         this.confirmOpen = false;
         this.toast((res && res.Status_Message) || `Fixed code set for ${this.selectedUserName}`);
         // Never keep the code around after it's saved.
@@ -356,6 +360,11 @@ export default {
         await this.$nextTick();
         this.$refs.form.resetValidation();
         await this.load();
+        // The list can lag the save by a moment; read it once more if the new code isn't there yet.
+        if (!this.items.some((x) => x.user_id === savedUserId)) {
+          await new Promise((r) => setTimeout(r, 1500));
+          await this.load();
+        }
       } catch (e) {
         this.confirmOpen = false;
         this.toast(e.message, "error");
