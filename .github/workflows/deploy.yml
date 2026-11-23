@@ -3,11 +3,11 @@ name: Deploy BMS
 # Build once, deploy the same bytes everywhere. The bundle holds no
 # environment values; each environment gets its own /config.json only.
 #
-# DEV:  every push to main builds and deploys to https://dev.bms.pharmawrk.com.
-# PROD: manual. Actions -> Deploy BMS -> Run workflow (branch main) ->
-#       environment "prod". It does NOT rebuild: it deploys the artifact from
-#       the latest successful DEV deploy on main (or the run id you give), so
-#       PROD gets exactly what DEV has.
+# Every push to main: build once -> deploy DEV (https://dev.bms.pharmawrk.com)
+#   -> if DEV succeeded, deploy the SAME build to PROD (https://prod.bms.pharmawrk.com).
+# Manual re-promote: Actions -> Deploy BMS -> Run workflow (branch main) ->
+#   environment "prod". It does NOT rebuild: it deploys the artifact from the
+#   latest successful push run on main (or the run id you give).
 #
 # config.json values are public identifiers that ship to the browser anyway.
 # "features" switches screens per environment without changing the build:
@@ -76,7 +76,13 @@ jobs:
 
   pick-prod-build:
     name: Pick build for PROD
-    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod' && github.ref == 'refs/heads/main'
+    needs: deploy-dev
+    # Push: right after DEV succeeds, with this run's build.
+    # Manual "prod": a previous push run's build.
+    if: >-
+      always() && github.ref == 'refs/heads/main' &&
+      ((github.event_name == 'push' && needs.deploy-dev.result == 'success') ||
+       (github.event_name == 'workflow_dispatch' && inputs.environment == 'prod'))
     runs-on: ubuntu-latest
     outputs:
       run_id: ${{ steps.pick.outputs.run_id }}
@@ -87,7 +93,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GIVEN: ${{ inputs.artifact_run_id }}
         run: |
-          if [ -n "$GIVEN" ]; then
+          if [ "${{ github.event_name }}" = "push" ]; then
+            run_id="${{ github.run_id }}"
+          elif [ -n "$GIVEN" ]; then
             run_id="$GIVEN"
           else
             run_id=$(gh run list --workflow deploy.yml --branch main --event push \
@@ -101,6 +109,7 @@ jobs:
   deploy-prod:
     name: PROD
     needs: pick-prod-build
+    if: always() && needs.pick-prod-build.result == 'success'
     uses: ./.github/workflows/_deploy-env.yml
     with:
       environment: prod
