@@ -333,6 +333,9 @@ export default {
       } catch (e) {
         if (/not available|set again|hash|before/i.test(e.message)) {
           this.unavailable = { ...this.unavailable, [item.user_id]: true };
+        } else if (/not ?found|expired/i.test(e.message)) {
+          this.toast("This code has expired or was removed.", "error");
+          this.load();
         } else {
           this.toast(e.message, "error");
         }
@@ -412,6 +415,7 @@ export default {
       }
     },
     async load() {
+      this.hideAll(); // a refresh hides any shown code
       this.loading = true;
       this.error = "";
       try {
