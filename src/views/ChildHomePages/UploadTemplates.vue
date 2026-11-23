@@ -1,5 +1,8 @@
 <template>
   <div>
+    <v-snackbar v-model="notice.show" :color="notice.color" location="top" :timeout="notice.color === 'error' ? 6000 : 4000">
+      {{ notice.text }}
+    </v-snackbar>
     <DownloadExcelTemplateDialog
       :DownloadExcelTemplateDialog="DownloadExcelTemplateDialog"
       @clicked="DownloadExcelTemplateEmit"
@@ -139,6 +142,7 @@ export default {
     latLngOn: () => featureOn("latLng"),
   },
   data: () => ({
+    notice: { show: false, text: "", color: "success" },
     anIncreasingNumber: 1,
     excelFile: null,
     processing: false,
@@ -150,12 +154,15 @@ export default {
   }),
 
   methods: {
+    showNotice(text, color = "success") {
+      this.notice = { show: true, text, color };
+    },
     downloadTemplate() {
       this.DownloadExcelTemplateDialog = true;
     },
     async processHospitalExcel() {
       if (!this.excelFile) {
-        alert("Please select a file");
+        this.showNotice("Choose an Excel file first", "error");
         return;
       }
 
@@ -355,11 +362,11 @@ export default {
           saveAs(blob, "POVs_With_LatLng.xlsx");
           this.progressPercentage = 100;
 
-          alert(`Completed. Generated ${outputData.length} rows.`);
+          this.showNotice(`Done: ${outputData.length} rows. POVs_With_LatLng.xlsx has been downloaded.`);
         } catch (error) {
           console.error(error);
           this.processing = false;
-          alert("Error processing file");
+          this.showNotice("Couldn't process this file. Check it uses the template's column names.", "error");
         }
       };
 
@@ -368,7 +375,7 @@ export default {
 
     async processDoctorExcel() {
       if (!this.excelFile) {
-        alert("Please select a file");
+        this.showNotice("Choose an Excel file first", "error");
         return;
       }
 
@@ -603,11 +610,11 @@ export default {
           saveAs(blob, "POVs_With_LatLng.xlsx");
           this.progressPercentage = 100;
 
-          alert(`Completed. Generated ${outputData.length} rows.`);
+          this.showNotice(`Done: ${outputData.length} rows. POVs_With_LatLng.xlsx has been downloaded.`);
         } catch (error) {
           console.error(error);
           this.processing = false;
-          alert("Error processing file");
+          this.showNotice("Couldn't process this file. Check it uses the template's column names.", "error");
         }
       };
 
@@ -616,7 +623,7 @@ export default {
 
     async processPharmacistExcel() {
       if (!this.excelFile) {
-        alert("Please select a file");
+        this.showNotice("Choose an Excel file first", "error");
         return;
       }
 
@@ -906,11 +913,11 @@ export default {
           saveAs(blob, "POVs_With_LatLng.xlsx");
           this.progressPercentage = 100;
 
-          alert(`Completed. Generated ${outputData.length} rows.`);
+          this.showNotice(`Done: ${outputData.length} rows. POVs_With_LatLng.xlsx has been downloaded.`);
         } catch (error) {
           console.error(error);
           this.processing = false;
-          alert("Error processing file");
+          this.showNotice("Couldn't process this file. Check it uses the template's column names.", "error");
         }
       };
 
