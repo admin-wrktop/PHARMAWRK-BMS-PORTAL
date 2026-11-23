@@ -128,19 +128,20 @@ export function relativeTime(ms, now = Date.now()) {
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Who gets the staff email for a case of this severity. Same rule as the backend:
- * To = the severity's To list, else the default To; CC likewise (each list on its
- * own); URGENT also adds urgent_to_emails. De-duplicated, CC never repeats a To.
+ * Who gets the staff email for a case of this severity. Same rule as the backend's
+ * routeFor(): the severity's lists are used only when its To list is non-empty, and
+ * then both its To and its CC apply (an empty CC means no CC). Otherwise the default
+ * To and CC apply and a CC-only severity row is ignored. URGENT also adds
+ * urgent_to_emails to To.
  */
 export function severityRecipients(settings, severity) {
   const s = settings || {};
   const own = (s.by_severity && s.by_severity[severity]) || {};
-  const ownTo = own.to_emails || [];
-  const ownCc = own.cc_emails || [];
+  const hit = (own.to_emails || []).length > 0;
   const urgent = severity === "URGENT" ? s.urgent_to_emails || [] : [];
-  const to = [...new Set([...(ownTo.length ? ownTo : s.to_emails || []), ...urgent])];
-  const cc = [...new Set(ownCc.length ? ownCc : s.cc_emails || [])].filter((e) => !to.includes(e));
-  return { to, cc, ownTo: ownTo.length > 0, ownCc: ownCc.length > 0 };
+  const to = [...new Set([...((hit ? own.to_emails : s.to_emails) || []), ...urgent])];
+  const cc = [...((hit ? own.cc_emails : s.cc_emails) || [])];
+  return { to, cc, own: hit };
 }
 
 /* ------------------------------------------------------------------ */

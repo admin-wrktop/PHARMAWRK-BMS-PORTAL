@@ -14,8 +14,8 @@
         <v-btn icon variant="text" size="small" aria-label="Close" @click="close"><v-icon>mdi-close</v-icon></v-btn>
       </v-card-title>
       <v-card-subtitle class="px-5 text-wrap">
-        Who is emailed when a case is raised or a customer replies. Set different people per severity; a
-        severity left empty uses the default lists.
+        Who is emailed when a case is raised, a customer replies or the severity is raised. Set different
+        people per severity; a severity with no To uses the default lists.
       </v-card-subtitle>
 
       <v-card-text class="px-5 pt-4">
@@ -29,7 +29,7 @@
         <template v-else>
           <!-- Default -->
           <div class="ss-section">Default</div>
-          <div class="pw-muted ss-help">Used for any severity whose own list is empty.</div>
+          <div class="pw-muted ss-help">Used for any severity that has no To of its own.</div>
           <v-combobox
             v-for="f in defaultFields"
             :key="f.key"
@@ -51,7 +51,8 @@
           <!-- Per severity -->
           <div class="ss-section mt-2">By severity</div>
           <div class="pw-muted ss-help">
-            To and CC are each taken from the severity if set, otherwise from the default.
+            A severity with its own To uses its own To and CC (an empty CC means no CC). A severity with no To
+            uses the default To and CC.
           </div>
           <div v-for="sev in severities" :key="sev" class="ss-sev">
             <div class="ss-sev__head">
@@ -75,7 +76,7 @@
               <v-combobox
                 v-model="form.by_severity[sev].cc_emails"
                 label="CC"
-                :placeholder="form.cc_emails.length ? 'Default CC' : ''"
+                :placeholder="!who[sev].own && form.cc_emails.length ? 'Default CC' : ''"
                 persistent-placeholder
                 multiple
                 chips
@@ -83,7 +84,7 @@
                 variant="outlined"
                 density="compact"
                 :delimiters="DELIMS"
-                :error-messages="listError(form.by_severity[sev].cc_emails)"
+                :error-messages="ccError(sev)"
                 @update:model-value="form.by_severity[sev].cc_emails = clean($event)"
               />
             </div>
@@ -91,10 +92,10 @@
               <span class="pw-muted mr-1">Who gets this:</span>
               <template v-if="who[sev].to.length">
                 <strong>To</strong> {{ who[sev].to.join(", ") }}
-                <span class="pw-muted">({{ who[sev].ownTo ? "this severity" : "default" }}{{ sev === "URGENT" && form.urgent_to_emails.length ? " + urgent" : "" }})</span>
+                <span class="pw-muted">({{ who[sev].own ? "this severity" : "default" }}{{ sev === "URGENT" && form.urgent_to_emails.length ? " + urgent" : "" }})</span>
                 <template v-if="who[sev].cc.length">
                   · <strong>CC</strong> {{ who[sev].cc.join(", ") }}
-                  <span class="pw-muted">({{ who[sev].ownCc ? "this severity" : "default" }})</span>
+                  <span class="pw-muted">({{ who[sev].own ? "this severity" : "default" }})</span>
                 </template>
               </template>
               <span v-else class="ss-nobody">nobody — add a To here or in Default</span>
@@ -155,7 +156,7 @@ export default {
         this.form.urgent_to_emails,
         ...SEVERITY_ORDER.flatMap((s) => [this.form.by_severity[s].to_emails, this.form.by_severity[s].cc_emails]),
       ];
-      return lists.some((l) => this.listError(l).length);
+      return lists.some((l) => this.listError(l).length) || SEVERITY_ORDER.some((s) => this.ccError(s).length);
     },
   },
   watch: {
@@ -176,6 +177,12 @@ export default {
       if (bad.length) return [`Not a valid email: ${bad.join(", ")}`];
       if (l.length > MAX_EMAILS) return [`At most ${MAX_EMAILS} emails`];
       return [];
+    },
+    /** The backend ignores a severity's CC unless that severity also has a To. */
+    ccError(sev) {
+      const r = this.form.by_severity[sev];
+      if (r.cc_emails.length && !r.to_emails.length) return ["Add a To for this severity, or remove this CC (it would be ignored)"];
+      return this.listError(r.cc_emails);
     },
     async load() {
       this.saveError = "";
