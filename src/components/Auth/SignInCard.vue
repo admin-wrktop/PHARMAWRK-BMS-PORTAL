@@ -31,7 +31,8 @@
           variant="flat"
           class="mt-2"
           :loading="loading"
-          >Send code</v-btn
+          :disabled="loading || cooldown > 0"
+          >{{ cooldown > 0 ? `Send code (${cooldown}s)` : "Send code" }}</v-btn
         >
       </v-form>
     </template>
@@ -77,9 +78,9 @@
             variant="text"
             size="small"
             color="primary"
-            :disabled="loading"
+            :disabled="loading || cooldown > 0"
             @click="SignIn()"
-            >Resend code</v-btn
+            >{{ cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code" }}</v-btn
           >
         </div>
       </v-form>
@@ -105,7 +106,12 @@ export default {
     loadingPassword: false,
     SnackBarComponent: {},
     retried: false,
+    cooldown: 0, // seconds until another code can be requested
+    cooldownTimer: null,
   }),
+  beforeUnmount() {
+    clearInterval(this.cooldownTimer);
+  },
   methods: {
     notify(text, color = "red") {
       this.SnackBarComponent = {
@@ -124,8 +130,20 @@ export default {
       const { valid } = await this.$refs.form.validate();
       if (valid) this.SignIn();
     },
+    startCooldown(seconds = 30) {
+      clearInterval(this.cooldownTimer);
+      this.cooldown = seconds;
+      this.cooldownTimer = setInterval(() => {
+        this.cooldown -= 1;
+        if (this.cooldown <= 0) {
+          this.cooldown = 0;
+          clearInterval(this.cooldownTimer);
+        }
+      }, 1000);
+    },
     async SignIn() {
-      if (this.loading) return;
+      // one request at a time, and at most one code every 30 seconds
+      if (this.loading || this.cooldown > 0) return;
       try {
         this.loading = true;
         const user = await signIn({
@@ -138,6 +156,7 @@ export default {
         ) {
           this.Login.Password = "";
           this.step = 2;
+          this.startCooldown(30);
           this.notify(
             `Code sent to ${this.Login.EmailID.toLowerCase()}`,
             "success",
@@ -159,6 +178,9 @@ export default {
         const msg = String((error && error.message) || error);
         if (String(error).includes("NOT_AUTHORIZED")) {
           this.notify("No BMS account found for this email");
+        } else if (/too many|LimitExceeded|TooManyRequests/i.test(msg)) {
+          this.notify("Too many codes requested. Wait a minute, then try again.");
+          this.startCooldown(60);
         } else if (/CreateAuthChallenge failed|Email address is not verified|failed the check/i.test(msg)) {
           this.notify("We couldn't send a sign-in code to this email right now. Please contact PharmaWRK support.");
         } else {
