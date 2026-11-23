@@ -2028,6 +2028,13 @@ export default {
       } else if (val == 5) {
         this.getOrgbyTerritory();
       } else if (val == 6) {
+        // Same default as the main Audit Log page: the last month. Don't
+        // depend on the Visits tab having been opened first (shared dates).
+        const FromOneMonthAgo = new Date(
+          Math.floor(new Date().getTime() / 1000 - 2629743) * 1000,
+        );
+        this.FromDate = FromOneMonthAgo;
+        this.FromDateValue = FromOneMonthAgo.toISOString().substr(0, 10);
         this.getOrgbyAuditLogs();
       }
     },
@@ -2486,12 +2493,8 @@ export default {
     },
     async getOrgbyAuditLogs() {
       try {
-        var fromDatetimestamp = new Date(
-          new Date(this.FromDateValue).setHours(0, 0, 1, 0),
-        ).getTime();
-        var toDatetimestamp = new Date(
-          new Date(this.ToDateValue).setHours(23, 59, 59, 999),
-        ).getTime();
+        var fromDatetimestamp = dayStartMs(this.FromDateValue);
+        var toDatetimestamp = dayEndMs(this.ToDateValue);
         this.overlay = true;
         this.auditList = [];
 
