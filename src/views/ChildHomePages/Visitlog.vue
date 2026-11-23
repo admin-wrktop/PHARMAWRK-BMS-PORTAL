@@ -646,6 +646,7 @@
 </template>
 
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import { dayStartMs, dayEndMs } from "@/utils/dates.js";
 import { activeOrgsSorted, pickDefaultOrg, rememberOrg } from "@/utils/orgDefaults.js";
 import PovConversionDialog1 from "@/components/Report/PovConversionDialog1.vue";
@@ -1138,7 +1139,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
 
@@ -1164,7 +1165,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
 
@@ -1193,7 +1194,7 @@ export default {
       } catch (error) {
         this.UserList = [];
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
   },

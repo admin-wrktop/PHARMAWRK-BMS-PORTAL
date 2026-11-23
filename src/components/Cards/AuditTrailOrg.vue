@@ -1493,6 +1493,7 @@
   </div>
 </template>
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import { dayStartMs, dayEndMs } from "@/utils/dates.js";
 import {
   ListOrganizationUsers,
@@ -2353,7 +2354,7 @@ export default {
       } catch (error) {
         console.log("erroe pov", error);
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
     async getOrgbyUser(user_status, user_type) {
@@ -2378,7 +2379,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
     async getOrgbyVisits(from_date, to_date, pov_type, next_token) {
@@ -2432,7 +2433,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
     async getOrgbyProduct() {
@@ -2456,7 +2457,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
     async getOrgbyTerritory() {
@@ -2480,7 +2481,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
     async getOrgbyAuditLogs() {
@@ -2512,7 +2513,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
     DownloadMyExcel(Header, ArrayList, FileName) {

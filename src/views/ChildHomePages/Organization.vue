@@ -223,6 +223,7 @@
   </div>
 </template>
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import WarningDialog from "@/components/Dialogs/WarningDialog.vue";
 import CreateEditOrganization from "@/components/Dialogs/CreateEditOrganization.vue";
 import SnackBar from "@/components/SnackBar.vue";
@@ -356,7 +357,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
   },

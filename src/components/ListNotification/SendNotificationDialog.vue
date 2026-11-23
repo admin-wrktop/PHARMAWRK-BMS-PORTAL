@@ -138,6 +138,7 @@
   </div>
 </template>
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import { activeOrgsSorted, pickDefaultOrg } from "@/utils/orgDefaults.js";
 import { SendNotificationsToUsers } from "@/graphql/mutations.js";
 
@@ -248,7 +249,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        // this.NoData = error.errors[0].message;
+        // this.NoData = errorMessage(error);
         console.log("errorssss", error);
       }
     },
@@ -336,7 +337,7 @@ export default {
         }
         this.overlay = false;
       } catch (error) {
-        // this.NoData = error.errors[0].message;
+        // this.NoData = errorMessage(error);
         console.log("errorssss", error);
         this.UserList = [];
         this.overlay = false;
@@ -361,7 +362,7 @@ export default {
       } catch (error) {
         this.overlay = false;
         console.log(error, "error");
-        // this.NoData = error.errors[0].message;
+        // this.NoData = errorMessage(error);
         console.log("errorssss", error);
       }
     },

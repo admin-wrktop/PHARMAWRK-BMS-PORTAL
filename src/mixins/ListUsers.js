@@ -1,3 +1,4 @@
+import { errorMessage } from "@/utils/errorMessage.js";
 import { ListOrganizationUsers } from "@/graphql/queries.js";
 import { generateClient } from "aws-amplify/api";
 const client = generateClient();
@@ -27,7 +28,7 @@ export const GetOrgUsers = {
         console.log("userrrsss", this.userList);
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
   },

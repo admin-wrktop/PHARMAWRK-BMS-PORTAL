@@ -1,3 +1,4 @@
+import { errorMessage } from "@/utils/errorMessage.js";
 import { ListAllDesignation } from "@/graphql/queries.js";
 import { generateClient } from "aws-amplify/api";
 const client = generateClient();
@@ -23,7 +24,7 @@ export const GetOrgDesignations = {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
   },

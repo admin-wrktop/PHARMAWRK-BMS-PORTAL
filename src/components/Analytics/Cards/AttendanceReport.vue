@@ -454,6 +454,7 @@
 </template>
 
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import { dayStartMs, dayEndMs } from "@/utils/dates.js";
 import Overlay from "@/components/Overlay.vue";
 import { DownloadExcel } from "@/mixins/Extras/DownloadExcel.js";
@@ -856,7 +857,7 @@ export default {
     //     }
     //     this.overlay = false;
     //   } catch (error) {
-    //     // this.NoData = error.errors[0].message;
+    //     // this.NoData = errorMessage(error);
     //     console.log("errorrrrr", error);
     //     this.UserList = [];
     //     this.overlay = false;
@@ -884,7 +885,7 @@ export default {
       } catch (error) {
         this.overlay = false;
         console.log("desigerror", error);
-        // this.NoData = error.errors[0].message;
+        // this.NoData = errorMessage(error);
       }
     },
 

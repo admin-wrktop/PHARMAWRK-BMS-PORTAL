@@ -83,6 +83,7 @@
   </div>
 </template>
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import {
   CreateNotificationsSettings,
   UpdateNotificationSettings,
@@ -171,7 +172,7 @@ export default {
         this.SnackBarComponent = {
           SnackbarVmodel: true,
           SnackbarColor: "red",
-          SnackbarText: error.errors[0].message,
+          SnackbarText: errorMessage(error),
           Top: true,
           timeout: 2000,
         };
@@ -209,7 +210,7 @@ export default {
         this.SnackBarComponent = {
           SnackbarVmodel: true,
           SnackbarColor: "red",
-          SnackbarText: error.errors[0].message,
+          SnackbarText: errorMessage(error),
           Top: true,
           timeout: 2000,
         };

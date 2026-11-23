@@ -235,6 +235,7 @@
 </template>
 
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import { dayStartMs, dayEndMs } from "@/utils/dates.js";
 import { activeOrgsSorted, pickDefaultOrg, rememberOrg } from "@/utils/orgDefaults.js";
 import moment from "moment";
@@ -385,7 +386,7 @@ export default {
         this.AuditLogs = [];
         this.overlay = false;
         this.loading = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
 
@@ -437,7 +438,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
   },

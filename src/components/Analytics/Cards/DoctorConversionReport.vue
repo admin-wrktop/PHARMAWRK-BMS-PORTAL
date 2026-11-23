@@ -266,6 +266,7 @@
   </div>
 </template>
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import Overlay from "@/components/Overlay.vue";
 import { format, parseISO } from "date-fns";
 import moment from "moment";
@@ -772,7 +773,7 @@ export default {
       } catch (error) {
         this.overlay = false;
         console.log(error, "error");
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
     async getRemarks(catelog_name) {
@@ -805,7 +806,7 @@ export default {
       } catch (error) {
         this.overlay = false;
         // console.log(error, "error");
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
 
@@ -827,7 +828,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
     // getDate() {

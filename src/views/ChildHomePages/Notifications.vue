@@ -177,6 +177,7 @@
 </template>
 
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 // import WarningDialog from "@/components/warning/Dialogs/WarningDialog.vue";
 import SendNotificationDialog from "@/components/ListNotification/SendNotificationDialog.vue";
 import Overlay from "@/components/Overlay.vue";
@@ -332,7 +333,7 @@ export default {
     //     this.overlay = false;
     //   } catch (error) {
     //     this.overlay = false;
-    //     this.NoData = error.errors[0].message;
+    //     this.NoData = errorMessage(error);
     //   }
     // },
 

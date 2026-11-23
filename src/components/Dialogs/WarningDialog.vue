@@ -70,6 +70,7 @@
   </div>
 </template>
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import SnackBar from "@/components/SnackBar.vue";
 import {
   DeactiveOrActivateOrganization,
@@ -132,7 +133,7 @@ export default {
         this.SnackBarComponent = {
           SnackbarVmodel: true,
           SnackbarColor: "red",
-          SnackbarText: error.errors[0].message,
+          SnackbarText: errorMessage(error),
           Top: true,
           timeout: 2000,
         };

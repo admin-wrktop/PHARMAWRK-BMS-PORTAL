@@ -304,6 +304,7 @@
 </template>
 
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import {
   ListScheduledCMEs,
   ListAllDesignation,
@@ -517,7 +518,7 @@ export default {
       } catch (error) {
         this.overlay = false;
         console.log("DesignationError", error);
-        // this.NoData = error.errors[0].message;
+        // this.NoData = errorMessage(error);
       }
     },
     async getUsersLists(user_type) {
@@ -545,7 +546,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         console.log("UsersError", error);
-        // this.NoData = error.errors[0].message;
+        // this.NoData = errorMessage(error);
         this.UserList = [];
         this.overlay = false;
       }

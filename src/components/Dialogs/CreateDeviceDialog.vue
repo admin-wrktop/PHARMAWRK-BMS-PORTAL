@@ -167,6 +167,7 @@
   </div>
 </template>
 <script>
+import { errorMessage } from "@/utils/errorMessage.js";
 import { CreateDevice, UpdateDevice } from "@/graphql/mutations.js";
 import { ListOrganizationUsers, ListOrganizations } from "@/graphql/queries.js";
 import SnackBar from "@/components/SnackBar.vue";
@@ -345,7 +346,7 @@ export default {
         this.SnackBarComponent = {
           SnackbarVmodel: true,
           SnackbarColor: "red",
-          SnackbarText: error.errors[0].message,
+          SnackbarText: errorMessage(error),
           Top: true,
           timeout: 2000,
         };
@@ -411,7 +412,7 @@ export default {
         this.SnackBarComponent = {
           SnackbarVmodel: true,
           SnackbarColor: "red",
-          SnackbarText: error.errors[0].message,
+          SnackbarText: errorMessage(error),
           Top: true,
           timeout: 2000,
         };
@@ -441,7 +442,7 @@ export default {
         this.overlay = false;
       } catch (error) {
         this.overlay = false;
-        this.NoData = error.errors[0].message;
+        this.NoData = errorMessage(error);
       }
     },
     async getOrgLists(org_id) {
