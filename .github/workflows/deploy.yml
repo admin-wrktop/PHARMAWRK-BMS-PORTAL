@@ -124,4 +124,4 @@ jobs:
         "userPoolClientId":"2c2p7f8lscn8qngo80vuq8b7ip",
         "graphqlEndpoint":"https://uqslozlpuvgv5eu2fjks7n7xce.appsync-api.ap-south-1.amazonaws.com/graphql",
         "esperConsoleUrl":"${{ vars.VUE_APP_ESPER_CONSOLE_URL }}",
-        "features":{"supportCases":false,"latLng":false}}
+        "features":{"supportCases":true,"latLng":false}}
