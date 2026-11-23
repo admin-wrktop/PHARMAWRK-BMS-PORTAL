@@ -192,6 +192,15 @@ function sameOriginFontCss() {
  * button) are left out. Resolves { file } or { file: null, reason }; never throws.
  */
 export async function captureCurrentPage() {
+  // html-to-image can't copy ::placeholder rules, so a placeholder Vuetify hides
+  // (labelled field, not active) would be drawn on top of the label. Strip those
+  // placeholders for the capture and put them back afterwards.
+  const hidden = Array.from(
+    document.querySelectorAll(
+      ".v-field:not(.v-field--no-label):not(.v-field--active) input[placeholder], .v-field:not(.v-field--no-label):not(.v-field--active) textarea[placeholder]",
+    ),
+  ).map((el) => [el, el.getAttribute("placeholder")]);
+  hidden.forEach(([el]) => el.removeAttribute("placeholder"));
   try {
     const { toBlob } = await import(/* webpackChunkName: "html-to-image" */ "html-to-image");
     // body, not .v-application: Vuetify teleports dialogs and menus outside it
@@ -209,6 +218,8 @@ export async function captureCurrentPage() {
       // an image that can't be fetched must not abort the whole capture
       imagePlaceholder: BLANK_PIXEL,
       filter: (node) => {
+        // non-visual nodes: <noscript> text would otherwise be drawn as plain text
+        if (/^(NOSCRIPT|SCRIPT|STYLE|TEMPLATE|LINK|META)$/.test(node.tagName || "")) return false;
         if (node.tagName === "IMG" && !(node.complete && node.naturalWidth > 0)) return false;
         return !(node.classList && (node.classList.contains("support-capture-exclude") || node.classList.contains("pw-skip-link")));
       },
@@ -225,5 +236,7 @@ export async function captureCurrentPage() {
   } catch (e) {
     console.warn("[support] page capture failed", e);
     return { file: null, reason: "The page couldn't be captured." };
+  } finally {
+    hidden.forEach(([el, v]) => el.setAttribute("placeholder", v));
   }
 }

@@ -204,7 +204,7 @@ const blank = () => ({
   description: "",
   severity: "NORMAL",
   case_type: "BUG",
-  app_area: null,
+  app_area: "BMS", // raised from the BMS; staff can change it
   category: "",
 });
 
