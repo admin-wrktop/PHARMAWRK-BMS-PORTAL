@@ -49,7 +49,7 @@
       <h2 class="pw-signin__title">Check your email</h2>
       <p class="pw-signin__sub">
         Enter the 6-digit code sent to
-        <strong>{{ Login.EmailID.toLowerCase() }}</strong>
+        <strong>{{ Login.EmailID.toLowerCase() }}</strong>. It's valid for 3 minutes.
       </p>
       <v-form ref="formOTP" @submit.prevent="ValidateConfirmSignIn">
         <v-otp-input
@@ -104,6 +104,7 @@ export default {
     loading: false,
     loadingPassword: false,
     SnackBarComponent: {},
+    retried: false,
   }),
   methods: {
     notify(text, color = "red") {
@@ -124,6 +125,7 @@ export default {
       if (valid) this.SignIn();
     },
     async SignIn() {
+      if (this.loading) return;
       try {
         this.loading = true;
         const user = await signIn({
@@ -143,8 +145,14 @@ export default {
         }
       } catch (error) {
         console.warn("Sign in failed", error);
-        if (error.message === "There is already a signed in user.") {
-          await signOut({ global: true });
+        if (error.message === "There is already a signed in user." && !this.retried) {
+          // An old (possibly expired) session is still stored: clear it locally and retry once.
+          this.retried = true;
+          try {
+            await signOut();
+          } catch (e) {
+            /* already gone */
+          }
           this.loading = false;
           return this.SignIn();
         }
@@ -180,7 +188,16 @@ export default {
         );
       } catch (error) {
         this.Login.Password = "";
-        this.notify(error.message);
+        const msg = String((error && error.message) || error);
+        // The sign-in attempt lives ~3 minutes (Cognito session + Amplify's
+        // stored state); after that, or after too many wrong codes, Amplify
+        // reports "signIn was not called before confirmSignIn".
+        if (/signIn was not called|session has expired|session is expired|Invalid session/i.test(msg)) {
+          this.step = 1;
+          this.notify("That code has expired. Request a new code and enter it within 3 minutes.");
+        } else {
+          this.notify(msg);
+        }
       } finally {
         this.loadingPassword = false;
       }
