@@ -14,8 +14,11 @@
         <v-btn icon variant="text" size="small" aria-label="Close" @click="close"><v-icon>mdi-close</v-icon></v-btn>
       </v-card-title>
       <v-card-subtitle class="px-5 text-wrap">
-        Who is emailed when a case is raised, a customer replies or the severity is raised. Set different
-        people per severity; a severity with no To uses the default lists.
+        <template v-if="severityOn">
+          Who is emailed when a case is raised, a customer replies or the severity is raised. Set different
+          people per severity; a severity with no To uses the default lists.
+        </template>
+        <template v-else>Who is emailed when a case is raised or a customer replies.</template>
       </v-card-subtitle>
 
       <v-card-text class="px-5 pt-4">
@@ -29,13 +32,13 @@
         <template v-else>
           <!-- Default -->
           <div class="ss-section">Default</div>
-          <div class="pw-muted ss-help">Used for any severity that has no To of its own.</div>
+          <div v-if="severityOn" class="pw-muted ss-help">Used for any severity that has no To of its own.</div>
           <v-combobox
             v-for="f in defaultFields"
             :key="f.key"
             v-model="form[f.key]"
             :label="f.label"
-            :hint="f.hint"
+            :hint="!severityOn && f.key === 'urgent_to_emails' ? 'Also emailed for Urgent cases.' : f.hint"
             persistent-hint
             multiple
             chips
@@ -48,7 +51,8 @@
             @update:model-value="form[f.key] = clean($event)"
           />
 
-          <!-- Per severity -->
+          <!-- Per severity: only when this environment's backend supports it (see severityOn) -->
+          <template v-if="severityOn">
           <div class="ss-section mt-2">By severity</div>
           <div class="pw-muted ss-help">
             A severity with its own To uses its own To and CC (an empty CC means no CC). A severity with no To
@@ -101,6 +105,7 @@
               <span v-else class="ss-nobody">nobody — add a To here or in Default</span>
             </div>
           </div>
+          </template>
         </template>
       </v-card-text>
 
@@ -137,6 +142,9 @@ export default {
   data: () => ({
     SUPPORT_SEVERITY,
     severities: SEVERITY_ORDER,
+    // Shown only when the backend returns by_severity: a backend without severity routing (PROD until
+    // Backend's release) would accept a save and drop the lists, so staff never see fields that don't work.
+    severityOn: false,
     DELIMS: [",", " ", ";"],
     defaultFields: DEFAULT_FIELDS,
     form: { to_emails: [], cc_emails: [], urgent_to_emails: [], by_severity: emptySeverities() },
@@ -191,6 +199,7 @@ export default {
       try {
         const res = await supportCall("bmsGetSupportSettings", {});
         const s = (res && (res.settings || res)) || {};
+        this.severityOn = Object.prototype.hasOwnProperty.call(s, "by_severity");
         const bySev = emptySeverities();
         SEVERITY_ORDER.forEach((k) => {
           const v = (s.by_severity && s.by_severity[k]) || {};
@@ -217,12 +226,14 @@ export default {
           to_emails: this.form.to_emails,
           cc_emails: this.form.cc_emails,
           urgent_to_emails: this.form.urgent_to_emails,
-          by_severity: Object.fromEntries(
-            SEVERITY_ORDER.map((k) => [
-              k,
-              { to_emails: this.form.by_severity[k].to_emails, cc_emails: this.form.by_severity[k].cc_emails },
-            ]),
-          ),
+          ...(this.severityOn && {
+            by_severity: Object.fromEntries(
+              SEVERITY_ORDER.map((k) => [
+                k,
+                { to_emails: this.form.by_severity[k].to_emails, cc_emails: this.form.by_severity[k].cc_emails },
+              ]),
+            ),
+          }),
         });
         this.close();
       } catch (e) {
