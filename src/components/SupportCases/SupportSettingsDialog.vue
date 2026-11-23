@@ -111,8 +111,9 @@
           <template v-if="autoCloseOn">
             <div class="ss-section mt-4">Auto-close</div>
             <div class="pw-muted ss-help">
-              Cases waiting on the customer are closed automatically after this many days without a reply; a
-              reply re-opens the case.
+              Cases awaiting the customer are resolved automatically when the customer hasn't replied this many
+              days after our last reply. The customer is emailed, and a reply re-opens the case. Checked every hour;
+              cases marked awaiting release are never closed.
             </div>
             <div class="ss-autoclose">
               <v-switch
@@ -159,7 +160,7 @@ import { supportCall } from "@/mixins/SupportCases/SupportCasesApi.js";
 import { EMAIL_REGEX, SUPPORT_SEVERITY, SEVERITY_ORDER, severityRecipients } from "@/utils/supportCases.js";
 
 const MAX_EMAILS = 20;
-// Auto-close bounds and default (proposed contract; Backend confirms the final values).
+// Auto-close bounds and default (Backend contract: whole days 1-30, default 3, on by default).
 const AUTO_CLOSE = { MIN: 1, MAX: 30, DEFAULT: 3 };
 const DEFAULT_FIELDS = [
   { key: "to_emails", label: "To", hint: "Emailed for every new case and customer reply." },
@@ -182,6 +183,7 @@ export default {
     // Shown only when the backend returns the auto-close fields (same reason as severityOn).
     autoCloseOn: false,
     AUTO_CLOSE,
+    savedAutoCloseDays: AUTO_CLOSE.DEFAULT,
     DELIMS: [",", " ", ";"],
     defaultFields: DEFAULT_FIELDS,
     form: {
@@ -203,10 +205,7 @@ export default {
     },
     autoCloseError() {
       if (!this.autoCloseOn || !this.form.auto_close_enabled) return [];
-      const d = this.form.auto_close_days;
-      if (!Number.isInteger(d) || d < AUTO_CLOSE.MIN || d > AUTO_CLOSE.MAX)
-        return [`Enter whole days from ${AUTO_CLOSE.MIN} to ${AUTO_CLOSE.MAX}`];
-      return [];
+      return this.validDays(this.form.auto_close_days) ? [] : [`Enter whole days from ${AUTO_CLOSE.MIN} to ${AUTO_CLOSE.MAX}`];
     },
     hasInvalid() {
       const lists = [
@@ -228,6 +227,9 @@ export default {
     },
   },
   methods: {
+    validDays(d) {
+      return Number.isInteger(d) && d >= AUTO_CLOSE.MIN && d <= AUTO_CLOSE.MAX;
+    },
     clean(list) {
       const seen = new Set();
       return (list || [])
@@ -270,6 +272,7 @@ export default {
           auto_close_enabled: s.auto_close_enabled !== false,
           auto_close_days: Number.isInteger(s.auto_close_days) ? s.auto_close_days : AUTO_CLOSE.DEFAULT,
         };
+        this.savedAutoCloseDays = this.form.auto_close_days;
       } catch (e) {
         this.loadError = e.message;
       } finally {
@@ -287,7 +290,11 @@ export default {
           urgent_to_emails: this.form.urgent_to_emails,
           ...(this.autoCloseOn && {
             auto_close_enabled: this.form.auto_close_enabled,
-            auto_close_days: this.form.auto_close_days,
+            // With the switch off the days field is not validated; keep the saved value rather than send a
+            // blank or out-of-range number, which the backend rejects.
+            auto_close_days: this.autoCloseError.length || !this.validDays(this.form.auto_close_days)
+              ? this.savedAutoCloseDays
+              : this.form.auto_close_days,
           }),
           ...(this.severityOn && {
             by_severity: Object.fromEntries(
