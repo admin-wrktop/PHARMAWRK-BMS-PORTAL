@@ -2,6 +2,12 @@
   <v-snackbar v-model="done.show" color="success" location="top" :timeout="5000" class="support-capture-exclude">
     {{ done.text }}
   </v-snackbar>
+  <v-dialog v-model="zoom" max-width="1200" :z-index="3001" class="support-capture-exclude">
+    <v-card>
+      <img :src="shotUrl" alt="Screenshot of the page, full size" style="width: 100%; display: block" />
+      <v-card-actions><v-spacer /><v-btn variant="text" @click="zoom = false">Close</v-btn></v-card-actions>
+    </v-card>
+  </v-dialog>
   <v-dialog v-model="visible" max-width="640" persistent scrollable :z-index="3000" class="support-capture-exclude">
     <v-card>
       <v-card-title class="d-flex align-center pt-4 px-5">
@@ -98,9 +104,9 @@
               <v-progress-circular indeterminate size="18" width="2" class="mr-2" /> Taking a screenshot…
             </div>
             <div v-else-if="shot" class="rc-shot__row">
-              <a :href="shotUrl" target="_blank" rel="noopener" class="rc-shot__thumb" title="Open full size">
+              <button type="button" class="rc-shot__thumb" title="View full size" @click="zoom = true">
                 <img :src="shotUrl" alt="Screenshot of the page" />
-              </a>
+              </button>
               <div class="rc-shot__meta">
                 <div>{{ shot.name }} <span class="pw-muted">· {{ bytes(shot.size) }}</span></div>
                 <div class="pw-muted rc-hint">Attached to the case. Open dialogs on the page are included.</div>
@@ -214,6 +220,7 @@ export default {
     orgs: [],
     shot: null,
     shotUrl: "",
+    zoom: false,
     capturing: false,
     captureNote: "",
     done: { show: false, text: "" },
@@ -314,12 +321,17 @@ export default {
     setShot(file) {
       this.dropShot();
       this.shot = file;
-      this.shotUrl = URL.createObjectURL(file);
+      // data: URL, not blob: (the site's CSP allows data: images only)
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (this.shot === file) this.shotUrl = String(reader.result || "");
+      };
+      reader.readAsDataURL(file);
     },
     dropShot() {
-      if (this.shotUrl) URL.revokeObjectURL(this.shotUrl);
       this.shot = null;
       this.shotUrl = "";
+      this.zoom = false;
     },
     async loadUsers(orgId) {
       this.users = [];
@@ -402,6 +414,8 @@ export default {
   font-size: 13px;
 }
 .rc-shot__thumb {
+  padding: 0;
+  cursor: zoom-in;
   flex: 0 0 auto;
   width: 160px;
   height: 100px;
