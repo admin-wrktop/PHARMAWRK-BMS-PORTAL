@@ -1,5 +1,8 @@
 <template>
-  <v-dialog :model-value="modelValue" max-width="640" persistent scrollable @update:model-value="$emit('update:modelValue', $event)">
+  <v-snackbar v-model="done.show" color="success" location="top" :timeout="5000" class="support-capture-exclude">
+    {{ done.text }}
+  </v-snackbar>
+  <v-dialog v-model="visible" max-width="640" persistent scrollable :z-index="3000" class="support-capture-exclude">
     <v-card>
       <v-card-title class="d-flex align-center pt-4 px-5">
         <v-icon class="mr-2" color="primary">mdi-lifebuoy</v-icon>
@@ -89,6 +92,36 @@
             maxlength="80"
           />
 
+          <div class="rc-shot mb-3">
+            <div class="pw-section-title mb-2">Screenshot of the page</div>
+            <div v-if="capturing" class="rc-shot__row pw-muted">
+              <v-progress-circular indeterminate size="18" width="2" class="mr-2" /> Taking a screenshot…
+            </div>
+            <div v-else-if="shot" class="rc-shot__row">
+              <a :href="shotUrl" target="_blank" rel="noopener" class="rc-shot__thumb" title="Open full size">
+                <img :src="shotUrl" alt="Screenshot of the page" />
+              </a>
+              <div class="rc-shot__meta">
+                <div>{{ shot.name }} <span class="pw-muted">· {{ bytes(shot.size) }}</span></div>
+                <div class="pw-muted rc-hint">Attached to the case. Open dialogs on the page are included.</div>
+                <div class="mt-1">
+                  <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-camera-retake-outline" :disabled="saving" @click="retake">Retake</v-btn>
+                  <v-btn size="small" variant="text" :disabled="saving" @click="dropShot">Remove</v-btn>
+                </div>
+              </div>
+            </div>
+            <v-alert v-else-if="captureNote" type="warning" variant="tonal" density="compact">
+              {{ captureNote }}
+              <template #append>
+                <v-btn size="small" variant="text" :disabled="saving" @click="retake">Try again</v-btn>
+              </template>
+            </v-alert>
+            <div v-else class="rc-shot__row">
+              <span class="pw-muted rc-hint mr-2">No screenshot attached.</span>
+              <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-monitor-screenshot" :disabled="saving" @click="retake">Take screenshot</v-btn>
+            </div>
+          </div>
+
           <div
             class="rc-drop"
             :class="{ 'rc-drop--over': dragging }"
@@ -107,7 +140,7 @@
               <v-icon size="14">{{ fileIcon(f.name) }}</v-icon>
               <span class="rc-chip__name">{{ f.name }}</span>
               <span class="pw-muted">{{ bytes(f.size) }}</span>
-              <v-progress-circular v-if="saving && progress[i] !== undefined" :model-value="progress[i]" size="14" width="2" />
+              <v-progress-circular v-if="saving && progress[i + (shot ? 1 : 0)] !== undefined" :model-value="progress[i + (shot ? 1 : 0)]" size="14" width="2" />
               <button v-else type="button" class="rc-chip__x" :aria-label="`Remove ${f.name}`" @click="files.splice(i, 1)">
                 <v-icon size="14">mdi-close</v-icon>
               </button>
@@ -142,7 +175,10 @@
 import { generateClient } from "aws-amplify/api";
 import { ListUsersOfOrganization } from "@/graphql/queries.js";
 import { createStaffCase, uploadSupportAttachments } from "@/mixins/SupportCases/SupportCasesApi.js";
+import { listActiveOrgs } from "@/mixins/UserOtps/UserOtpApi.js";
+import { activeOrgsSorted } from "@/utils/orgDefaults.js";
 import {
+  captureCurrentPage,
   SUPPORT_SEVERITY,
   SEVERITY_ORDER,
   CASE_TYPES,
@@ -168,13 +204,19 @@ const blank = () => ({
 
 export default {
   name: "RaiseCaseDialog",
-  props: {
-    modelValue: { type: Boolean, default: false },
-    /** [{ value: organization_id, title: organization_name }] */
-    orgs: { type: Array, default: () => [] },
-  },
-  emits: ["update:modelValue", "created"],
+  /*
+   * One instance lives in the app shell. Open it with open({ capture: true }):
+   * it screenshots the page first (open dialogs included), then shows on top
+   * of everything (z-index 3000). On success it fires window "pw-case-created".
+   */
   data: () => ({
+    visible: false,
+    orgs: [],
+    shot: null,
+    shotUrl: "",
+    capturing: false,
+    captureNote: "",
+    done: { show: false, text: "" },
     scope: "ORG",
     form: blank(),
     users: [],
@@ -206,9 +248,6 @@ export default {
     },
   },
   watch: {
-    modelValue(open) {
-      if (open) this.reset();
-    },
     "form.organization_id"(id) {
       this.form.on_behalf_of_user_id = null;
       this.loadUsers(id);
@@ -227,8 +266,60 @@ export default {
       this.progress = {};
       this.$nextTick(() => this.$refs.form && this.$refs.form.resetValidation());
     },
+    async open({ capture = false } = {}) {
+      if (this.visible || this.capturing) return;
+      this.reset();
+      this.dropShot();
+      this.captureNote = "";
+      this.loadOrgs();
+      if (capture) await this.takeScreenshot();
+      this.visible = true;
+    },
     close() {
-      this.$emit("update:modelValue", false);
+      this.visible = false;
+      this.dropShot();
+    },
+    async loadOrgs() {
+      if (this.orgs.length) return;
+      try {
+        this.orgs = activeOrgsSorted(await listActiveOrgs()).map((o) => ({
+          value: o.organization_id,
+          title: o.organization_name,
+        }));
+      } catch (e) {
+        this.orgs = [];
+      }
+    },
+    async takeScreenshot() {
+      this.capturing = true;
+      try {
+        const { file, reason } = await captureCurrentPage();
+        if (file) {
+          this.setShot(file);
+          this.captureNote = "";
+        } else {
+          this.captureNote = `${reason || "The page couldn't be captured."} Paste a screenshot (Ctrl+V) into the description or attach one below.`;
+        }
+      } finally {
+        this.capturing = false;
+      }
+    },
+    /** Hide the form, capture the page as it is now, show the form again. */
+    async retake() {
+      this.visible = false;
+      await new Promise((r) => setTimeout(r, 350)); // let the form fade out
+      await this.takeScreenshot();
+      this.visible = true;
+    },
+    setShot(file) {
+      this.dropShot();
+      this.shot = file;
+      this.shotUrl = URL.createObjectURL(file);
+    },
+    dropShot() {
+      if (this.shotUrl) URL.revokeObjectURL(this.shotUrl);
+      this.shot = null;
+      this.shotUrl = "";
     },
     async loadUsers(orgId) {
       this.users = [];
@@ -248,7 +339,7 @@ export default {
       }
     },
     addFiles(list) {
-      const { ok, errors } = validateFiles(Array.from(list || []), this.files.length);
+      const { ok, errors } = validateFiles(Array.from(list || []), this.files.length + (this.shot ? 1 : 0));
       this.files.push(...ok);
       this.fileErrors = errors;
     },
@@ -272,8 +363,9 @@ export default {
       try {
         const orgId = this.scope === "ORG" ? this.form.organization_id : undefined;
         this.progress = {};
-        const attachments = this.files.length
-          ? await uploadSupportAttachments(orgId ? { organization_id: orgId } : {}, this.files, (i, pct) => {
+        const toUpload = this.shot ? [this.shot, ...this.files] : this.files;
+        const attachments = toUpload.length
+          ? await uploadSupportAttachments(orgId ? { organization_id: orgId } : {}, toUpload, (i, pct) => {
               this.progress = { ...this.progress, [i]: pct };
             })
           : [];
@@ -288,7 +380,9 @@ export default {
           category: this.form.category || undefined,
           attachments,
         });
-        this.$emit("created", res && res.ticket);
+        const ticket = res && res.ticket;
+        window.dispatchEvent(new CustomEvent("pw-case-created", { detail: ticket }));
+        this.done = { show: true, text: `Case ${(ticket && ticket.case_number) || ""} raised`.replace("  ", " ") };
         this.close();
       } catch (e) {
         this.error = e.message;
@@ -301,6 +395,33 @@ export default {
 </script>
 
 <style scoped>
+.rc-shot__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.rc-shot__thumb {
+  flex: 0 0 auto;
+  width: 160px;
+  height: 100px;
+  border: 1px solid var(--pw-border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: block;
+  background: #f4f5f7;
+}
+.rc-shot__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+  display: block;
+}
+.rc-shot__meta {
+  min-width: 0;
+  font-size: 13px;
+}
 .rc-hint {
   font-size: 12px;
 }

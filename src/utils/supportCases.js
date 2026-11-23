@@ -126,3 +126,104 @@ export function relativeTime(ms, now = Date.now()) {
 }
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/* ------------------------------------------------------------------ */
+/* Page screenshot for Raise case (same approach as the Portal).       */
+
+const BLANK_PIXEL = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+const pad2 = (n) => String(n).padStart(2, "0");
+const stamp = () => {
+  const d = new Date();
+  return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
+};
+
+/*
+ * Font CSS for the capture, built only from same-origin stylesheets (the icon
+ * font). Letting html-to-image read every stylesheet logs errors for
+ * cross-origin sheets (Google Fonts) and is slow. Cached per page load.
+ */
+let fontCssPromise = null;
+const toDataUrl = (blob) =>
+  new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result || ""));
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+function sameOriginFontCss() {
+  if (fontCssPromise) return fontCssPromise;
+  fontCssPromise = (async () => {
+    const out = [];
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules;
+      try {
+        if (sheet.href && new URL(sheet.href).origin !== window.location.origin) continue;
+        rules = sheet.cssRules;
+      } catch (e) {
+        continue; // cross-origin: skip quietly
+      }
+      for (const rule of Array.from(rules || [])) {
+        if (rule.type !== 5) continue; // CSSFontFaceRule
+        const src = rule.style.getPropertyValue("src") || "";
+        const m = /url\(["']?([^"')]+\.woff2[^"')]*)["']?\)/.exec(src);
+        if (!m) continue;
+        try {
+          const url = new URL(m[1], sheet.href || window.location.href).href;
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const data = await toDataUrl(await res.blob());
+          const family = rule.style.getPropertyValue("font-family");
+          const weight = rule.style.getPropertyValue("font-weight") || "normal";
+          const style = rule.style.getPropertyValue("font-style") || "normal";
+          out.push(`@font-face{font-family:${family};src:url(${data}) format("woff2");font-weight:${weight};font-style:${style};}`);
+        } catch (e) {
+          /* skip this font */
+        }
+      }
+    }
+    return out.join("\n");
+  })();
+  return fontCssPromise;
+}
+
+/**
+ * Screenshot of what's on screen (viewport), open dialogs and menus included.
+ * Only elements marked `.support-capture-exclude` (the Raise case form and its
+ * button) are left out. Resolves { file } or { file: null, reason }; never throws.
+ */
+export async function captureCurrentPage() {
+  try {
+    const { toBlob } = await import(/* webpackChunkName: "html-to-image" */ "html-to-image");
+    // body, not .v-application: Vuetify teleports dialogs and menus outside it
+    const root = document.body;
+    const bg = getComputedStyle(document.body).backgroundColor || "#ffffff";
+    const fontEmbedCSS = await sameOriginFontCss();
+    const wide = window.innerWidth > 1600;
+    const base = {
+      cacheBust: true,
+      fontEmbedCSS,
+      backgroundColor: bg,
+      width: window.innerWidth,
+      height: window.innerHeight,
+      style: { transform: `translateY(-${window.scrollY}px)` },
+      // an image that can't be fetched must not abort the whole capture
+      imagePlaceholder: BLANK_PIXEL,
+      filter: (node) => {
+        if (node.tagName === "IMG" && !(node.complete && node.naturalWidth > 0)) return false;
+        return !(node.classList && (node.classList.contains("support-capture-exclude") || node.classList.contains("pw-skip-link")));
+      },
+    };
+    let blob = await toBlob(root, { ...base, pixelRatio: wide ? 1 : Math.min(window.devicePixelRatio || 1, 1.5) });
+    let name = `screenshot-${stamp()}.png`;
+    if (blob && blob.size > MAX_FILE_BYTES) {
+      blob = await toBlob(root, { ...base, pixelRatio: 1, type: "image/jpeg", quality: 0.82 });
+      name = `screenshot-${stamp()}.jpg`;
+    }
+    if (!blob) return { file: null, reason: "The page couldn't be captured." };
+    if (blob.size > MAX_FILE_BYTES) return { file: null, reason: "The screenshot is larger than 15 MB." };
+    return { file: new File([blob], name, { type: blob.type || "image/png" }) };
+  } catch (e) {
+    console.warn("[support] page capture failed", e);
+    return { file: null, reason: "The page couldn't be captured." };
+  }
+}

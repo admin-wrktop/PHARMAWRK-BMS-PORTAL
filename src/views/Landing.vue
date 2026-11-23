@@ -2,6 +2,20 @@
   <div class="pw-shell">
     <a href="#pw-main" class="pw-skip-link">Skip to content</a>
     <Overlay :overlay="overlay" />
+    <RaiseCaseDialog v-if="supportOn" ref="raiseCase" />
+    <v-btn
+      v-if="supportOn"
+      class="pw-raise-fab support-capture-exclude"
+      color="primary"
+      icon
+      size="large"
+      elevation="8"
+      aria-label="Raise a support case (Ctrl+Shift+I)"
+      title="Raise a support case (Ctrl/Cmd+Shift+I)"
+      @click="openRaiseCase"
+    >
+      <v-icon>mdi-lifebuoy</v-icon>
+    </v-btn>
 
     <AppNavDrawer v-model="drawer" :items="navItems" />
 
@@ -142,6 +156,8 @@ import {
   routeGroup,
 } from "@/components/AppShell/navigation.js";
 import { signOut } from "aws-amplify/auth";
+import RaiseCaseDialog from "@/components/SupportCases/RaiseCaseDialog.vue";
+import { featureOn } from "@/config.js";
 
 const THEME_KEY = "pharmawrk.theme";
 // Pages that render their own cards (dashboards) — no page surface around them.
@@ -149,13 +165,14 @@ const BARE_ROUTES = ["Dashboard", "Support Cases"];
 
 export default {
   mixins: [GetCurrentUser],
-  components: { Overlay, AppNavDrawer },
+  components: { Overlay, AppNavDrawer, RaiseCaseDialog },
   data: () => ({
     logoSrc: require("@/assets/PortalFinalLogo.png"),
     drawer: true,
     overlay: false,
     navItems: visibleNavItems(),
     GetCurrentUserDetailsObj: {},
+    supportOn: featureOn("supportCases"),
   }),
   computed: {
     pageTitle() {
@@ -214,6 +231,8 @@ export default {
     }
   },
   async mounted() {
+    window.addEventListener("keydown", this.onRaiseShortcut);
+    window.addEventListener("pw-raise-case", this.openRaiseCase);
     if (this.$route.name === "Landing") {
       this.$router.replace({ name: "Dashboard", query: this.$route.query });
     }
@@ -226,7 +245,22 @@ export default {
     }
     this.GetCurrentUser();
   },
+  beforeUnmount() {
+    window.removeEventListener("keydown", this.onRaiseShortcut);
+    window.removeEventListener("pw-raise-case", this.openRaiseCase);
+  },
   methods: {
+    /** Screenshot what's on screen (open dialogs included), then open Raise case on top. */
+    openRaiseCase() {
+      if (this.$refs.raiseCase) this.$refs.raiseCase.open({ capture: true });
+    },
+    onRaiseShortcut(e) {
+      if (!this.supportOn) return;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "I" || e.key === "i")) {
+        e.preventDefault();
+        this.openRaiseCase();
+      }
+    },
     isBareRoute(name) {
       return BARE_ROUTES.includes(name);
     },
@@ -252,6 +286,12 @@ export default {
 };
 </script>
 <style scoped>
+.pw-raise-fab {
+  position: fixed !important;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2999; /* above dialogs and their backdrop, below the Raise case form */
+}
 .pw-appbar {
   background: rgba(var(--v-theme-surface), 0.92) !important;
   backdrop-filter: saturate(1.4) blur(8px);

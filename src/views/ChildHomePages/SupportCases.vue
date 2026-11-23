@@ -1,7 +1,6 @@
 <template>
   <div class="sc-page">
     <SupportSettingsDialog v-model="settingsOpen" />
-    <RaiseCaseDialog v-model="raiseOpen" :orgs="orgItems.filter((o) => o.value !== 'PLATFORM')" @created="onRaised" />
 
     <!-- Per-status counts (click to filter) -->
     <div class="sc-counts">
@@ -81,7 +80,7 @@
             size="small"
             color="primary"
             prepend-icon="mdi-plus"
-            @click="raiseOpen = true"
+            @click="raiseCase"
             >Raise case</v-btn
           >
         </div>
@@ -173,7 +172,6 @@ import { ListOrganizations, ListBMSUsers } from "@/graphql/queries.js";
 import StatusChip from "@/components/ui/StatusChip.vue";
 import SupportCaseDetail from "@/components/SupportCases/SupportCaseDetail.vue";
 import SupportSettingsDialog from "@/components/SupportCases/SupportSettingsDialog.vue";
-import RaiseCaseDialog from "@/components/SupportCases/RaiseCaseDialog.vue";
 import { supportCall } from "@/mixins/SupportCases/SupportCasesApi.js";
 import {
   SUPPORT_STATUS,
@@ -190,7 +188,7 @@ const PAGE_SIZE = 100;
 
 export default {
   name: "SupportCases",
-  components: { StatusChip, SupportCaseDetail, SupportSettingsDialog, RaiseCaseDialog },
+  components: { StatusChip, SupportCaseDetail, SupportSettingsDialog },
   data: () => ({
     cases: [],
     counts: {},
@@ -207,7 +205,6 @@ export default {
     staff: [],
     selectedId: null,
     settingsOpen: false,
-    raiseOpen: false,
     now: Date.now(),
     listSeq: 0,
     timer: null,
@@ -275,9 +272,11 @@ export default {
     this.loadOrgs();
     this.loadStaff();
     this.timer = setInterval(() => (this.now = Date.now()), 60000);
+    window.addEventListener("pw-case-created", this.onCaseCreatedEvent);
   },
   beforeUnmount() {
     clearInterval(this.timer);
+    window.removeEventListener("pw-case-created", this.onCaseCreatedEvent);
   },
   methods: {
     statusLabel: (s) => (SUPPORT_STATUS[s] || {}).label || s,
@@ -364,6 +363,13 @@ export default {
       const q = { ...this.$route.query };
       delete q.case;
       this.$router.replace({ query: q });
+    },
+    /** The Raise case form lives in the app shell (with the floating button). */
+    raiseCase() {
+      window.dispatchEvent(new CustomEvent("pw-raise-case"));
+    },
+    onCaseCreatedEvent(e) {
+      this.onRaised(e && e.detail);
     },
     async onRaised(ticket) {
       // Show the new case: back to "All open", reload, open it.
