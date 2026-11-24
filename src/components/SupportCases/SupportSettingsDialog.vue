@@ -139,6 +139,42 @@
               />
             </div>
           </template>
+
+          <!-- Reminders: only when this environment's backend supports them (see reminderOn) -->
+          <template v-if="reminderOn">
+            <div class="ss-section mt-4">Reminders</div>
+            <div class="pw-muted ss-help">
+              While a case awaits the customer, they are emailed a reminder at this interval after our last reply,
+              until they reply<template v-if="autoCloseOn"> or the case is closed automatically</template>.
+            </div>
+            <div class="ss-autoclose">
+              <v-switch
+                v-model="form.reminder_enabled"
+                label="Remind the customer"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-text-field
+                v-model.number="form.reminder_interval_days"
+                type="number"
+                :min="REMINDER.MIN"
+                :max="REMINDER.MAX"
+                step="1"
+                label="Every"
+                suffix="days"
+                variant="outlined"
+                density="compact"
+                :disabled="!form.reminder_enabled"
+                :error-messages="reminderError"
+              />
+            </div>
+            <div v-if="reminderNeverSent" class="ss-warn">
+              Auto-close happens after {{ form.auto_close_days }} days, so a reminder every
+              {{ form.reminder_interval_days }} days is never sent. Use a shorter interval.
+            </div>
+          </template>
         </template>
       </v-card-text>
 
@@ -162,6 +198,8 @@ import { EMAIL_REGEX, SUPPORT_SEVERITY, SEVERITY_ORDER, severityRecipients } fro
 const MAX_EMAILS = 20;
 // Auto-close bounds and default (Backend contract: whole days 1-30, default 3, on by default).
 const AUTO_CLOSE = { MIN: 1, MAX: 30, DEFAULT: 3 };
+// Reminder interval bounds and default (expected contract: whole days 1-30, default 1, on by default).
+const REMINDER = { MIN: 1, MAX: 30, DEFAULT: 1 };
 const DEFAULT_FIELDS = [
   { key: "to_emails", label: "To", hint: "Emailed for every new case and customer reply." },
   { key: "cc_emails", label: "CC", hint: "Copied on those emails." },
@@ -184,6 +222,10 @@ export default {
     autoCloseOn: false,
     AUTO_CLOSE,
     savedAutoCloseDays: AUTO_CLOSE.DEFAULT,
+    // Shown only when the backend returns the reminder fields (same reason as severityOn).
+    reminderOn: false,
+    REMINDER,
+    savedReminderDays: REMINDER.DEFAULT,
     DELIMS: [",", " ", ";"],
     defaultFields: DEFAULT_FIELDS,
     form: {
@@ -193,6 +235,8 @@ export default {
       by_severity: emptySeverities(),
       auto_close_enabled: true,
       auto_close_days: AUTO_CLOSE.DEFAULT,
+      reminder_enabled: true,
+      reminder_interval_days: REMINDER.DEFAULT,
     },
     loading: false,
     loadError: "",
@@ -207,6 +251,21 @@ export default {
       if (!this.autoCloseOn || !this.form.auto_close_enabled) return [];
       return this.validDays(this.form.auto_close_days) ? [] : [`Enter whole days from ${AUTO_CLOSE.MIN} to ${AUTO_CLOSE.MAX}`];
     },
+    reminderError() {
+      if (!this.reminderOn || !this.form.reminder_enabled) return [];
+      return this.validDays(this.form.reminder_interval_days, REMINDER)
+        ? []
+        : [`Enter whole days from ${REMINDER.MIN} to ${REMINDER.MAX}`];
+    },
+    /** Warning only: with auto-close on, an interval at or past the close day means no reminder goes out. */
+    reminderNeverSent() {
+      const f = this.form;
+      return (
+        this.reminderOn && this.autoCloseOn && f.reminder_enabled && f.auto_close_enabled &&
+        this.validDays(f.reminder_interval_days, REMINDER) && this.validDays(f.auto_close_days) &&
+        f.reminder_interval_days >= f.auto_close_days
+      );
+    },
     hasInvalid() {
       const lists = [
         this.form.to_emails,
@@ -217,7 +276,8 @@ export default {
       return (
         lists.some((l) => this.listError(l).length) ||
         SEVERITY_ORDER.some((s) => this.ccError(s).length) ||
-        this.autoCloseError.length > 0
+        this.autoCloseError.length > 0 ||
+        this.reminderError.length > 0
       );
     },
   },
@@ -227,8 +287,8 @@ export default {
     },
   },
   methods: {
-    validDays(d) {
-      return Number.isInteger(d) && d >= AUTO_CLOSE.MIN && d <= AUTO_CLOSE.MAX;
+    validDays(d, bounds = AUTO_CLOSE) {
+      return Number.isInteger(d) && d >= bounds.MIN && d <= bounds.MAX;
     },
     clean(list) {
       const seen = new Set();
@@ -259,6 +319,7 @@ export default {
         const has = (k) => Object.prototype.hasOwnProperty.call(s, k);
         this.severityOn = has("by_severity");
         this.autoCloseOn = has("auto_close_enabled") || has("auto_close_days");
+        this.reminderOn = has("reminder_enabled") || has("reminder_interval_days");
         const bySev = emptySeverities();
         SEVERITY_ORDER.forEach((k) => {
           const v = (s.by_severity && s.by_severity[k]) || {};
@@ -272,7 +333,12 @@ export default {
           auto_close_enabled: s.auto_close_enabled !== false,
           auto_close_days: Number.isInteger(s.auto_close_days) ? s.auto_close_days : AUTO_CLOSE.DEFAULT,
         };
+        this.form.reminder_enabled = s.reminder_enabled !== false;
+        this.form.reminder_interval_days = Number.isInteger(s.reminder_interval_days)
+          ? s.reminder_interval_days
+          : REMINDER.DEFAULT;
         this.savedAutoCloseDays = this.form.auto_close_days;
+        this.savedReminderDays = this.form.reminder_interval_days;
       } catch (e) {
         this.loadError = e.message;
       } finally {
@@ -288,6 +354,13 @@ export default {
           to_emails: this.form.to_emails,
           cc_emails: this.form.cc_emails,
           urgent_to_emails: this.form.urgent_to_emails,
+          ...(this.reminderOn && {
+            reminder_enabled: this.form.reminder_enabled,
+            // Same as auto-close: never send a blank or out-of-range number (the backend rejects it).
+            reminder_interval_days: this.validDays(this.form.reminder_interval_days, REMINDER)
+              ? this.form.reminder_interval_days
+              : this.savedReminderDays,
+          }),
           ...(this.autoCloseOn && {
             auto_close_enabled: this.form.auto_close_enabled,
             // With the switch off the days field is not validated; keep the saved value rather than send a
@@ -330,6 +403,11 @@ export default {
   .ss-autoclose {
     grid-template-columns: 1fr;
   }
+}
+.ss-warn {
+  color: rgb(var(--v-theme-warning));
+  font-size: 12.5px;
+  margin-top: 6px;
 }
 .ss-section {
   font-weight: 600;
