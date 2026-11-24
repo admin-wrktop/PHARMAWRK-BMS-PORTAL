@@ -144,8 +144,10 @@
           <template v-if="reminderOn">
             <div class="ss-section mt-4">Reminders</div>
             <div class="pw-muted ss-help">
-              While a case awaits the customer, they are emailed a reminder at this interval after our last reply,
-              until they reply<template v-if="autoCloseOn"> or the case is closed automatically</template>.
+              While a case awaits the customer, they are emailed a reminder in the case thread every this many days
+              after our last reply, until they reply, staff change the status<template v-if="autoCloseOn">, or the
+              case is closed automatically</template>. Cases marked awaiting release are not reminded. Checked every
+              hour.
             </div>
             <div class="ss-autoclose">
               <v-switch
@@ -198,7 +200,7 @@ import { EMAIL_REGEX, SUPPORT_SEVERITY, SEVERITY_ORDER, severityRecipients } fro
 const MAX_EMAILS = 20;
 // Auto-close bounds and default (Backend contract: whole days 1-30, default 3, on by default).
 const AUTO_CLOSE = { MIN: 1, MAX: 30, DEFAULT: 3 };
-// Reminder interval bounds and default (expected contract: whole days 1-30, default 1, on by default).
+// Reminder interval bounds and default (Backend contract: whole days 1-30, default 1, on by default).
 const REMINDER = { MIN: 1, MAX: 30, DEFAULT: 1 };
 const DEFAULT_FIELDS = [
   { key: "to_emails", label: "To", hint: "Emailed for every new case and customer reply." },
