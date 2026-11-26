@@ -29,7 +29,7 @@ const OUT_FILE = path.join(ROOT, "public/build-info.json");
 const ID_RE = /^(\d{4}-\d{2}-\d{2})(?:\.(\d+))?$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // Words that mean "not finished" or "talking to developers".
-const INTERNAL_RE = /\b(todo|fixme|tbd|placeholder|lorem)\b|this file|add new entries/i;
+const INTERNAL_RE = /\b(todo|fixme|tbd|xxx|placeholder|lorem|ipsum)\b|this file|add new entries/i;
 
 function isRealDate(s) {
   if (!DATE_RE.test(s)) return false;

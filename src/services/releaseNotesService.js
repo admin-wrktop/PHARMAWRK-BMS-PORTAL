@@ -16,6 +16,7 @@ export const BUILD_AT = typeof __PW_BUILD_AT__ !== "undefined" ? __PW_BUILD_AT__
 export const DISMISS_PREFIX = "pharmawrk_bms_release_notes_dismissed:";
 const DISMISS_KEY = `${DISMISS_PREFIX}browser`;
 const AUTO_RELOAD_PREFIX = "pharmawrk_bms_auto_reloaded:";
+const NAV_RELOAD_PREFIX = "pharmawrk_bms_nav_reloaded:";
 
 /** Any screen can open the release notes dialog with openReleaseNotes(). */
 export const OPEN_RELEASE_NOTES_EVENT = "pw:open-release-notes";
@@ -135,9 +136,20 @@ export async function checkForUpdate() {
   return info.commit;
 }
 
-/** Router hook: once a newer build is known, the next in-app navigation loads it. */
-export function updatePending() {
-  return !!pendingCommit;
+/**
+ * Router hook: once a newer build is known, the next in-app navigation loads it.
+ * At most once per target commit per tab, so a cached old index.html can't loop.
+ */
+export function claimNavReload() {
+  if (!pendingCommit) return false;
+  try {
+    const k = `${NAV_RELOAD_PREFIX}${pendingCommit}`;
+    if (window.sessionStorage.getItem(k)) return false;
+    window.sessionStorage.setItem(k, String(Date.now()));
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 /** True only the first time for this target commit in this tab (prevents reload loops). */

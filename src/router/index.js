@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Login from "../views/Login.vue";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { featureOn } from "@/config";
-import { updatePending } from "@/services/releaseNotesService";
+import { claimNavReload } from "@/services/releaseNotesService";
 
 const routes = [
   {
@@ -139,7 +139,7 @@ function isDevPreview(to) {
 // sent to sign-in and returned to the page they asked for afterwards.
 router.beforeEach(async (to, from) => {
   // A newer build is live: turn this in-app navigation into a full page load of it.
-  if (from.matched.length && updatePending()) {
+  if (from.matched.length && claimNavReload()) {
     window.location.assign(router.resolve(to).href);
     return false;
   }
