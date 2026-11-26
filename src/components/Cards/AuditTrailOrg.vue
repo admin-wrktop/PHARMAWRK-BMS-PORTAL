@@ -25,77 +25,20 @@
       <v-col cols="12" md="12">
         <v-card-text v-if="tab == 0" flat class="mt-6 mx-2">
           <v-row no-gutters>
-            <v-col cols="12" md="4">
-              <v-row no-gutters class="mt-2">
-                <v-col cols="12" md="5"><h5>Name :</h5></v-col>
-                <v-col cols="12" md="7"
-                  ><h5 class="text-blue-grey">
-                    {{ this.StoreObj.organization_name }}
-                  </h5></v-col
-                >
+            <v-col cols="12" md="4" class="org-details">
+              <v-row
+                v-for="f in orgDetailFields"
+                :key="f.label"
+                no-gutters
+                class="mt-2 org-details__row"
+              >
+                <v-col cols="12" sm="5" class="org-details__label"><h5>{{ f.label }} :</h5></v-col>
+                <v-col cols="12" sm="7" class="org-details__value">
+                  <h5 :class="f.color || 'text-blue-grey'" :title="f.value">{{ f.value }}</h5>
+                </v-col>
               </v-row>
-              <v-row no-gutters class="mt-2">
-                <v-col cols="12" md="5"><h5>Contact Email-Id :</h5></v-col>
-                <v-col cols="12" md="7"
-                  ><h5 class="text-blue-grey">
-                    {{ this.StoreObj.organization_contact_email_id }}
-                  </h5></v-col
-                >
-              </v-row>
-              <v-row no-gutters class="mt-2">
-                <v-col cols="12" md="5"><h5>Created On :</h5></v-col>
-                <v-col cols="12" md="7"
-                  ><h5 class="text-blue-grey">
-                    {{
-                      new Date(
-                        this.StoreObj.organization_created_on,
-                      ).toLocaleString()
-                    }}
-                  </h5></v-col
-                >
-              </v-row>
-              <v-row no-gutters class="mt-2">
-                <v-col cols="12" md="5"><h5>Mapped To :</h5></v-col>
-                <v-col cols="12" md="7"
-                  ><h5 class="text-blue-grey">
-                    {{ this.StoreObj.drug_mapping }}
-                  </h5></v-col
-                >
-              </v-row>
-              <v-row no-gutters class="mt-2">
-                <v-col cols="12" md="5"><h5>Manufacturer Type :</h5></v-col>
-                <v-col cols="12" md="7"
-                  ><h5 class="text-blue-grey">
-                    {{ this.StoreObj.manufacturer_type }}
-                  </h5></v-col
-                >
-              </v-row>
-              <v-row no-gutters class="mt-2">
-                <v-col cols="12" md="5"><h5>Status :</h5></v-col>
-                <v-col cols="12" md="7"
-                  ><h5 class="text-green">
-                    {{ this.StoreObj.organization_status }}
-                  </h5></v-col
-                >
-              </v-row>
-              <!-- <v-row no-gutters class="mt-2">
-                <v-col cols="12" md="5"><h5></h5></v-col>
-                <v-col cols="12" md="7"><h5 class="text-green"></h5></v-col>
-              </v-row>
-              <v-row no-gutters class="mt-2">
-                <v-col cols="12" md="5"><h5></h5></v-col>
-                <v-col cols="12" md="7"><h5 class="text-green"></h5></v-col>
-              </v-row>
-              <v-row no-gutters class="mt-2">
-                <v-col cols="12" md="5"><h5></h5></v-col>
-                <v-col cols="12" md="7"><h5 class="text-green"></h5></v-col>
-              </v-row>
-              <v-row no-gutters class="mt-2">
-                <v-col cols="12" md="5"><h5></h5></v-col>
-                <v-col cols="12" md="7"><h5 class="text-green"></h5></v-col>
-              </v-row> -->
             </v-col>
-            <v-col cols="8">
+            <v-col cols="12" md="8" class="org-chart-col">
               <v-card flat variant="outlined" class="pa-3">
                 <div v-if="reportLoading" class="pa-4">
                   <v-skeleton-loader type="image" height="220" />
@@ -1877,6 +1820,22 @@ export default {
     AnalyticsValue: "ATTENDANCE_REPORT",
   }),
   computed: {
+    /** Organization Details rows; long values wrap inside their column (full value on hover). */
+    orgDetailFields() {
+      const o = this.StoreObj || {};
+      const show = (v) => (v === undefined || v === null || v === "" ? "-" : String(v));
+      return [
+        { label: "Name", value: show(o.organization_name) },
+        { label: "Contact Email-Id", value: show(o.organization_contact_email_id) },
+        {
+          label: "Created On",
+          value: o.organization_created_on ? new Date(o.organization_created_on).toLocaleString() : "-",
+        },
+        { label: "Mapped To", value: show(o.drug_mapping) },
+        { label: "Manufacturer Type", value: show(o.manufacturer_type) },
+        { label: "Status", value: show(o.organization_status), color: "text-green" },
+      ];
+    },
     // displayToDateValue() {
     //   let currentDate = new Date(this.to_date);
     //   const getLast30Days = new Date(currentDate);
@@ -2540,7 +2499,33 @@ export default {
     },
   },
 };
-</script>.org-chart-empty {
+</script>
+
+<style scoped>
+/* Organization Details: values wrap inside their column; the chart never overlaps. */
+.org-details {
+  min-width: 0;
+  padding-right: 24px;
+}
+.org-details__value {
+  min-width: 0;
+}
+.org-details__value h5 {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.org-chart-col {
+  min-width: 0;
+}
+@media (max-width: 959px) {
+  .org-details {
+    padding-right: 0;
+  }
+  .org-chart-col {
+    margin-top: 16px;
+  }
+}
+.org-chart-empty {
   text-align: center;
   padding: 48px 16px;
   color: var(--pw-muted);
@@ -2550,4 +2535,4 @@ export default {
   color: rgb(var(--v-theme-on-surface));
   margin-bottom: 4px;
 }
-
+</style>
