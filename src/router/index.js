@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Login from "../views/Login.vue";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { featureOn } from "@/config";
+import { updatePending } from "@/services/releaseNotesService";
 
 const routes = [
   {
@@ -136,7 +137,12 @@ function isDevPreview(to) {
 
 // Every page except sign-in needs a Cognito session. Signed-out users are
 // sent to sign-in and returned to the page they asked for afterwards.
-router.beforeEach(async (to) => {
+router.beforeEach(async (to, from) => {
+  // A newer build is live: turn this in-app navigation into a full page load of it.
+  if (from.matched.length && updatePending()) {
+    window.location.assign(router.resolve(to).href);
+    return false;
+  }
   // Screens switched off for this environment (config.json "features").
   if (to.meta && to.meta.feature && !featureOn(to.meta.feature)) return { name: "Dashboard" };
   const isPublic = PUBLIC_ROUTES.includes(to.name);

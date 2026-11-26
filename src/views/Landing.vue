@@ -112,6 +112,14 @@
           <div class="pa-3">
             <v-btn
               block
+              variant="text"
+              prepend-icon="mdi-bullhorn-outline"
+              class="mb-2"
+              @click="openReleaseNotes()"
+              >What's new</v-btn
+            >
+            <v-btn
+              block
               color="error"
               variant="tonal"
               prepend-icon="mdi-logout"
@@ -156,6 +164,7 @@ import {
   routeGroup,
 } from "@/components/AppShell/navigation.js";
 import { signOut } from "aws-amplify/auth";
+import { openReleaseNotes } from "@/services/releaseNotesService";
 import RaiseCaseDialog from "@/components/SupportCases/RaiseCaseDialog.vue";
 import { featureOn } from "@/config.js";
 
@@ -273,6 +282,7 @@ export default {
         /* ignore */
       }
     },
+    openReleaseNotes,
     async signOutMethod() {
       try {
         await signOut();

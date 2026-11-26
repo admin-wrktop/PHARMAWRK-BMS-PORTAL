@@ -49,6 +49,8 @@ jobs:
         run: |
           npm run build
           rm -f dist/config.json
+          # prebuild wrote it (and checked the release notes); tabs poll it for new deploys
+          jq -e --arg c "${GITHUB_SHA::7}" '.commit == $c' dist/build-info.json
       - uses: actions/upload-artifact@v4
         with:
           name: bms-dist

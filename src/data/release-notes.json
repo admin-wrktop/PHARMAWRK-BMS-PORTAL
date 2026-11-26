@@ -1,0 +1,15 @@
+[
+  {
+    "id": "2026-11-26",
+    "date": "2026-11-26",
+    "title": "The new PharmaWRK BMS",
+    "notes": [
+      "The BMS now runs on the new PharmaWRK system, at the same address: bms.pharmawrk.com.",
+      "Sign in with your work email. We send a 6-digit code to that email; there is no password to remember.",
+      "Support Cases: notification settings now have their own To and CC lists for each severity (Low, Normal, High, Urgent). When a severity has no list of its own, the default To and CC are used.",
+      "Support Cases: while a case is waiting on the customer, they get a reminder in the case's email thread (every day by default). If there is still no answer 3 days after our last reply, the case is closed automatically. Both can be switched off or changed in the notification settings.",
+      "For your security, sign-in details that the old BMS kept in your browser for \"Remember me\" are now removed automatically.",
+      "New: \"What's new\" notes like these. When a newer version of the BMS is released, an open page refreshes itself, or asks you to refresh if you are in the middle of something."
+    ]
+  }
+]

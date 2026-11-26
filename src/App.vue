@@ -1,5 +1,6 @@
 <template>
   <v-app>
+    <ReleaseNotesBanner />
     <router-view />
   </v-app>
 </template>
@@ -8,8 +9,10 @@
 import "vuetify/styles";
 import "@/styles/design-system.css";
 import "@/styles/legacy-utilities.css";
+import ReleaseNotesBanner from "@/components/Extras/ReleaseNotesBanner.vue";
 
 export default {
   name: "App",
+  components: { ReleaseNotesBanner },
 };
 </script>

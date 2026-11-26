@@ -34,12 +34,15 @@
       <span>Authorised staff only</span>
       <span aria-hidden="true">·</span>
       <a href="mailto:contactus@wrktop.com">Support</a>
+      <span aria-hidden="true">·</span>
+      <a href="#" @click.prevent="openReleaseNotes()">What's new</a>
     </footer>
   </div>
 </template>
 
 <script>
 import SignInCard from "@/components/Auth/SignInCard.vue";
+import { openReleaseNotes } from "@/services/releaseNotesService";
 
 /** Small environment tag from the hostname (dev.bms… → DEV). Hidden on prod. */
 function detectEnv() {
@@ -65,6 +68,7 @@ export default {
   mounted() {
     document.title = "Sign in · PharmaWRK BMS";
   },
+  methods: { openReleaseNotes },
 };
 </script>
 
@@ -72,6 +76,7 @@ export default {
 .bms-auth {
   position: relative;
   min-height: 100vh;
+  padding-top: var(--pw-banner-height, 0px);
   display: flex;
   flex-direction: column;
   overflow: hidden;

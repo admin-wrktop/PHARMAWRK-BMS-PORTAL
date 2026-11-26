@@ -56,3 +56,6 @@ src/aws-exports.js
 
 # local runtime config for `npm run serve` (copy config.example.json)
 public/config.json
+
+# written by scripts/generate-build-info.js on every build / serve
+public/build-info.json
