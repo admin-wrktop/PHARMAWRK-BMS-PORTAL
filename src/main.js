@@ -6,11 +6,13 @@ import router from "./router";
 import store from "./store";
 import { Amplify } from "aws-amplify";
 import { loadConfig } from "./config";
+import { purgeLegacyStorage } from "./utils/legacyStorage";
 
 loadFonts();
 
 async function initApp() {
   const cfg = await loadConfig();
+  purgeLegacyStorage(cfg.userPoolClientId);
   Amplify.configure({
     Auth: {
       Cognito: {
