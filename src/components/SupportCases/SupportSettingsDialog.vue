@@ -145,9 +145,9 @@
             <div class="ss-section mt-4">Reminders</div>
             <div class="pw-muted ss-help">
               While a case awaits the customer, they are emailed a reminder in the case thread every this many days
-              after our last reply, until they reply, staff change the status<template v-if="autoCloseOn">, or the
-              case is closed automatically</template>. Cases marked awaiting release are not reminded. Checked every
-              hour.
+              after our last reply<template v-if="maxRemindersOn">, up to the number of reminders set below</template>,
+              until they reply, staff change the status<template v-if="autoCloseOn">, or the case is closed
+              automatically</template>. Cases marked awaiting release are not reminded. Checked every hour.
             </div>
             <div class="ss-autoclose">
               <v-switch
@@ -171,6 +171,28 @@
                 :disabled="!form.reminder_enabled"
                 :error-messages="reminderError"
               />
+            </div>
+            <div v-if="maxRemindersOn" class="ss-autoclose mt-3">
+              <span class="ss-autoclose__label">Reminders per wait</span>
+              <v-text-field
+                v-model.number="form.max_reminders"
+                type="number"
+                :min="MAX_REMINDERS.MIN"
+                :max="MAX_REMINDERS.MAX"
+                step="1"
+                label="At most"
+                suffix="reminders"
+                variant="outlined"
+                density="compact"
+                :disabled="!form.reminder_enabled"
+                :error-messages="maxRemindersError"
+              />
+            </div>
+            <div v-if="remindersCapped" class="ss-note">
+              With auto-close after {{ form.auto_close_days }} days and a reminder
+              {{ form.reminder_interval_days === 1 ? "every day" : `every ${form.reminder_interval_days} days` }}, only
+              {{ remindersBeforeClose }}
+              {{ remindersBeforeClose === 1 ? "reminder goes" : "reminders go" }} out before the case is closed.
             </div>
             <div v-if="reminderNeverSent" class="ss-warn">
               Auto-close happens after {{ form.auto_close_days }} days, so a reminder every
@@ -202,6 +224,8 @@ const MAX_EMAILS = 20;
 const AUTO_CLOSE = { MIN: 1, MAX: 30, DEFAULT: 3 };
 // Reminder interval bounds and default (Backend contract: whole days 1-30, default 1, on by default).
 const REMINDER = { MIN: 1, MAX: 30, DEFAULT: 1 };
+// Reminders per wait (Backend contract: whole number 1-10, default 1; kept when not sent).
+const MAX_REMINDERS = { MIN: 1, MAX: 10, DEFAULT: 1 };
 const DEFAULT_FIELDS = [
   { key: "to_emails", label: "To", hint: "Emailed for every new case and customer reply." },
   { key: "cc_emails", label: "CC", hint: "Copied on those emails." },
@@ -228,6 +252,10 @@ export default {
     reminderOn: false,
     REMINDER,
     savedReminderDays: REMINDER.DEFAULT,
+    // Shown only when the backend returns max_reminders (same reason as severityOn).
+    maxRemindersOn: false,
+    MAX_REMINDERS,
+    savedMaxReminders: MAX_REMINDERS.DEFAULT,
     DELIMS: [",", " ", ";"],
     defaultFields: DEFAULT_FIELDS,
     form: {
@@ -239,6 +267,7 @@ export default {
       auto_close_days: AUTO_CLOSE.DEFAULT,
       reminder_enabled: true,
       reminder_interval_days: REMINDER.DEFAULT,
+      max_reminders: MAX_REMINDERS.DEFAULT,
     },
     loading: false,
     loadError: "",
@@ -258,6 +287,27 @@ export default {
       return this.validDays(this.form.reminder_interval_days, REMINDER)
         ? []
         : [`Enter whole days from ${REMINDER.MIN} to ${REMINDER.MAX}`];
+    },
+    maxRemindersError() {
+      if (!this.maxRemindersOn || !this.form.reminder_enabled) return [];
+      return this.validDays(this.form.max_reminders, MAX_REMINDERS)
+        ? []
+        : [`Enter a whole number from ${MAX_REMINDERS.MIN} to ${MAX_REMINDERS.MAX}`];
+    },
+    /** Reminders that fit before auto-close: one every N days, strictly before the close day. */
+    remindersBeforeClose() {
+      const f = this.form;
+      if (!this.validDays(f.reminder_interval_days, REMINDER) || !this.validDays(f.auto_close_days)) return null;
+      return Math.floor((f.auto_close_days - 1) / f.reminder_interval_days);
+    },
+    /** Note only: auto-close comes before all the allowed reminders are sent. */
+    remindersCapped() {
+      const f = this.form;
+      return (
+        this.maxRemindersOn && this.reminderOn && this.autoCloseOn && f.reminder_enabled && f.auto_close_enabled &&
+        this.validDays(f.max_reminders, MAX_REMINDERS) && !this.reminderNeverSent &&
+        this.remindersBeforeClose !== null && this.remindersBeforeClose < f.max_reminders
+      );
     },
     /** Warning only: with auto-close on, an interval at or past the close day means no reminder goes out. */
     reminderNeverSent() {
@@ -279,7 +329,8 @@ export default {
         lists.some((l) => this.listError(l).length) ||
         SEVERITY_ORDER.some((s) => this.ccError(s).length) ||
         this.autoCloseError.length > 0 ||
-        this.reminderError.length > 0
+        this.reminderError.length > 0 ||
+        this.maxRemindersError.length > 0
       );
     },
   },
@@ -322,6 +373,7 @@ export default {
         this.severityOn = has("by_severity");
         this.autoCloseOn = has("auto_close_enabled") || has("auto_close_days");
         this.reminderOn = has("reminder_enabled") || has("reminder_interval_days");
+        this.maxRemindersOn = has("max_reminders");
         const bySev = emptySeverities();
         SEVERITY_ORDER.forEach((k) => {
           const v = (s.by_severity && s.by_severity[k]) || {};
@@ -340,7 +392,9 @@ export default {
           ? s.reminder_interval_days
           : REMINDER.DEFAULT;
         this.savedAutoCloseDays = this.form.auto_close_days;
+        this.form.max_reminders = Number.isInteger(s.max_reminders) ? s.max_reminders : MAX_REMINDERS.DEFAULT;
         this.savedReminderDays = this.form.reminder_interval_days;
+        this.savedMaxReminders = this.form.max_reminders;
       } catch (e) {
         this.loadError = e.message;
       } finally {
@@ -362,6 +416,12 @@ export default {
             reminder_interval_days: this.validDays(this.form.reminder_interval_days, REMINDER)
               ? this.form.reminder_interval_days
               : this.savedReminderDays,
+          }),
+          ...(this.maxRemindersOn && {
+            // Never send a blank or out-of-range number; the backend keeps the saved value when omitted.
+            max_reminders: this.validDays(this.form.max_reminders, MAX_REMINDERS)
+              ? this.form.max_reminders
+              : this.savedMaxReminders,
           }),
           ...(this.autoCloseOn && {
             auto_close_enabled: this.form.auto_close_enabled,
@@ -405,6 +465,14 @@ export default {
   .ss-autoclose {
     grid-template-columns: 1fr;
   }
+}
+.ss-autoclose__label {
+  font-size: 14px;
+}
+.ss-note {
+  color: var(--pw-muted);
+  font-size: 12.5px;
+  margin-top: 6px;
 }
 .ss-warn {
   color: rgb(var(--v-theme-warning));

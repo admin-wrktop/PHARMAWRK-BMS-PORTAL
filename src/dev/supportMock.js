@@ -81,7 +81,7 @@ tickets.forEach((t) => {
   ];
 });
 
-let settings = { to_emails: ["support@example.com"], cc_emails: [], urgent_to_emails: ["oncall@example.com"], by_severity: { HIGH: { to_emails: ["leads@example.com"], cc_emails: [] } }, auto_close_enabled: true, auto_close_days: 3, reminder_enabled: true, reminder_interval_days: 1 };
+let settings = { to_emails: ["support@example.com"], cc_emails: [], urgent_to_emails: ["oncall@example.com"], by_severity: { HIGH: { to_emails: ["leads@example.com"], cc_emails: [] } }, auto_close_enabled: true, auto_close_days: 3, reminder_enabled: true, reminder_interval_days: 1, max_reminders: 1 };
 
 function counts() {
   const c = {};
@@ -157,7 +157,7 @@ export function supportMock(command, p) {
     case "bmsGetSupportSettings":
       return Promise.resolve({ status: "SUCCESS", ...settings });
     case "bmsUpdateSupportSettings":
-      settings = { to_emails: p.to_emails, cc_emails: p.cc_emails, urgent_to_emails: p.urgent_to_emails, by_severity: p.by_severity || {}, auto_close_enabled: p.auto_close_enabled ?? true, auto_close_days: p.auto_close_days ?? 3, reminder_enabled: p.reminder_enabled ?? true, reminder_interval_days: p.reminder_interval_days ?? 1 };
+      settings = { to_emails: p.to_emails, cc_emails: p.cc_emails, urgent_to_emails: p.urgent_to_emails, by_severity: p.by_severity || {}, auto_close_enabled: p.auto_close_enabled ?? true, auto_close_days: p.auto_close_days ?? 3, reminder_enabled: p.reminder_enabled ?? true, reminder_interval_days: p.reminder_interval_days ?? 1, max_reminders: p.max_reminders ?? settings.max_reminders ?? 1 };
       return Promise.resolve({ status: "SUCCESS", ...settings });
     default:
       return undefined;
