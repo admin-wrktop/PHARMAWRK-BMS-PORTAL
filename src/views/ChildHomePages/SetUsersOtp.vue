@@ -122,7 +122,34 @@
       >
         <template #[`item.user_name`]="{ item }">
           <div class="otp-strong">{{ item.user_name || "–" }}</div>
-          <div v-if="item.phone_hint" class="pw-muted otp-small otp-mono">{{ item.phone_hint }}</div>
+          <!-- PW-100033: masked by default; an admin can show the full number for 30 s (audit-logged) -->
+          <div v-if="item.phone_hint || revealedPhone[item.user_id]" class="otp-cell pw-muted otp-small">
+            <template v-if="revealedPhone[item.user_id]">
+              <span class="otp-mono support-capture-exclude">{{ revealedPhone[item.user_id] }}</span>
+              <v-btn
+                icon
+                size="x-small"
+                variant="text"
+                :aria-label="`Hide mobile number of ${item.user_name || item.user_id}`"
+                @click="hidePhone(item.user_id)"
+                ><v-icon size="16">mdi-eye-off-outline</v-icon></v-btn
+              >
+            </template>
+            <template v-else>
+              <span class="otp-mono">{{ item.phone_hint }}</span>
+              <v-btn
+                v-if="canRevealPhone"
+                icon
+                size="x-small"
+                variant="text"
+                :loading="revealingPhone === item.user_id"
+                :aria-label="`Show mobile number of ${item.user_name || item.user_id}`"
+                title="Show the full number for 30 seconds (logged)"
+                @click="revealPhone(item)"
+                ><v-icon size="16">mdi-eye-outline</v-icon></v-btn
+              >
+            </template>
+          </div>
         </template>
         <template #[`item.otp`]="{ item }">
           <span v-if="!isActive(item)" class="pw-muted">–</span>
@@ -237,6 +264,7 @@ import {
   setUserOtp,
   removeUserOtp,
   revealUserOtp,
+  revealUserOtpPhone,
   listOrgUsers,
   listActiveOrgs,
   otpProblem,
@@ -269,6 +297,9 @@ export default {
     revealed: {}, // user_id -> code, shown for REVEAL_MS then hidden again
     revealTimers: {},
     revealing: null,
+    revealedPhone: {}, // user_id -> full number, shown for REVEAL_MS then hidden again
+    phoneTimers: {},
+    revealingPhone: null,
     unavailable: {}, // user_id -> true when the code was set before encrypted storage
     snack: { show: false, text: "", color: "primary" },
     dayItems: [1, 2, 3, 5, 7, 14, 21, 30].map((d) => ({ value: d, title: `${d} day${d > 1 ? "s" : ""}` })),
@@ -283,6 +314,11 @@ export default {
     ],
   }),
   computed: {
+    /** Hide the eye for a known non-admin (the backend refuses them anyway); unknown role = show. */
+    canRevealPhone() {
+      const me = (this.$store && this.$store.getters.get_current_user_details) || {};
+      return !me.user_role || me.user_role === "BMS_ADMIN";
+    },
     orgItems() {
       return this.orgs.map((o) => ({ value: o.organization_id, title: o.organization_name }));
     },
@@ -318,6 +354,30 @@ export default {
     this.hideAll();
   },
   methods: {
+    async revealPhone(item) {
+      if (this.revealingPhone) return;
+      this.revealingPhone = item.user_id;
+      try {
+        const phone = await revealUserOtpPhone(item.user_id);
+        if (!phone) {
+          this.toast("No mobile number on record for this user.", "error");
+          return;
+        }
+        this.revealedPhone = { ...this.revealedPhone, [item.user_id]: phone };
+        clearTimeout(this.phoneTimers[item.user_id]);
+        this.phoneTimers[item.user_id] = setTimeout(() => this.hidePhone(item.user_id), REVEAL_MS);
+      } catch (e) {
+        this.toast(e.message, "error");
+      } finally {
+        this.revealingPhone = null;
+      }
+    },
+    hidePhone(userId) {
+      clearTimeout(this.phoneTimers[userId]);
+      delete this.phoneTimers[userId];
+      const { [userId]: _gone, ...rest } = this.revealedPhone; // eslint-disable-line no-unused-vars
+      this.revealedPhone = rest;
+    },
     async revealCode(item) {
       if (this.revealing) return;
       this.revealing = item.user_id;
@@ -353,6 +413,9 @@ export default {
       Object.values(this.revealTimers).forEach(clearTimeout);
       this.revealTimers = {};
       this.revealed = {};
+      Object.values(this.phoneTimers).forEach(clearTimeout);
+      this.phoneTimers = {};
+      this.revealedPhone = {};
     },
     async copyCode(item) {
       const code = this.revealed[item.user_id];

@@ -6,7 +6,7 @@
  */
 import { generateClient } from "aws-amplify/api";
 import { ListUserOtps, ListUsersOfOrganization } from "@/graphql/queries.js";
-import { SetUserOtp, RemoveUserOtp, RevealUserOtp } from "@/graphql/mutations.js";
+import { SetUserOtp, RemoveUserOtp, RevealUserOtp, RevealUserOtpPhone } from "@/graphql/mutations.js";
 
 const client = generateClient();
 
@@ -53,6 +53,19 @@ export async function revealUserOtp(target_user_id) {
   }
   const otp = res && res.data && res.data.otp;
   return otp ? String(otp) : null;
+}
+
+/**
+ * The full mobile number of a user with a fixed code (PW-100033). Only this call returns it; the list
+ * shows the masked hint. BMS_ADMIN only; every reveal is audit-logged by the backend.
+ */
+export async function revealUserOtpPhone(target_user_id) {
+  const res = await run(RevealUserOtpPhone, "RevealUserOtpPhone", { target_user_id }, "revealPhone");
+  if (res && res.status && String(res.status).toUpperCase() !== "SUCCESS") {
+    throw new Error(res.Status_Message || res.message || "Couldn't show the number. Please try again.");
+  }
+  const phone = res && res.data && res.data.phone;
+  return phone ? String(phone) : null;
 }
 
 export const removeUserOtp = (target_user_id) =>

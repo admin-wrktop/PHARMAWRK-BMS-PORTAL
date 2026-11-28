@@ -112,6 +112,12 @@ export const RevealUserOtp = /* GraphQL */ `
     RevealUserOtp(input: $input)
   }
 `;
+// PW-100033: the user's full mobile number, BMS_ADMIN only, audit-logged and mailed like RevealUserOtp.
+export const RevealUserOtpPhone = /* GraphQL */ `
+  mutation RevealUserOtpPhone($input: RevealUserOtpInput!) {
+    RevealUserOtpPhone(input: $input)
+  }
+`;
 export const RemoveUserOtp = /* GraphQL */ `
   mutation RemoveUserOtp($input: RemoveUserOtpInput!) {
     RemoveUserOtp(input: $input)

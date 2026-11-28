@@ -29,6 +29,10 @@ export function userOtpMock(command, p) {
     }
     case "reveal":
       return Promise.resolve(p.target_user_id === "u2" ? { status: "SUCCESS", data: { otp: null } } : { status: "SUCCESS", data: { otp: "482915" } });
+    case "revealPhone": {
+      const u = users.find((x) => x.user_id === p.target_user_id);
+      return Promise.resolve(u ? { status: "SUCCESS", data: { user_id: u.user_id, phone: u.user_contact_number } } : { status: "ERROR", Status_Message: "No mobile number on record" });
+    }
     case "remove":
       items = items.filter((x) => x.user_id !== p.target_user_id);
       return Promise.resolve({ status: "SUCCESS", Status_Message: "Fixed sign-in code removed" });
