@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-28",
+    "date": "2026-11-28",
+    "title": "Set Users OTP: show a mobile number",
+    "notes": [
+      "Set Users OTP: BMS admins can now show a user's full mobile number in the list of users with a fixed code. Click the eye next to the masked number; it shows for 30 seconds.",
+      "Like showing a code, every time a number is shown it is recorded in the audit log and the BMS admins are emailed."
+    ]
+  },
+  {
     "id": "2026-11-27",
     "date": "2026-11-27",
     "title": "Support Cases: reminder count",
